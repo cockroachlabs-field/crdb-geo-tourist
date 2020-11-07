@@ -53,9 +53,6 @@
   stJamesPark = [51.576594, -0.035910];
   points.push(stJamesPark);
 
-  stJohnsWood = [51.534410, -0.173710];
-  points.push(stJohnsWood);
-
   dublin = [53.346028, -6.279658];
   points.push(dublin);
 
@@ -121,8 +118,8 @@
   }).addTo(mymap);
 
   // Type of amenity (pub, cafe, bar, restaurant, ...)
-  //var amenity = "restaurant";
-  var amenity = "pub";
+  var amenityTypes = ["restaurant", "pub", "cafe", "bar"];
+  var amenity = amenityTypes[Math.floor(Math.random() * amenityTypes.length)];
 
   // This is where I'm located
   L.marker([myLat, myLon], {icon: personIcon}).addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
