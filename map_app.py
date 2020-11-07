@@ -114,7 +114,7 @@ def features():
 
 @app.route("/")
 def index():
-  return render_template("index.html")
+  return render_template("index.html", mapbox_token=os.getenv("MAPBOX_TOKEN", "MAPBOX_TOKEN_NOT_SET"))
 
 if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
