@@ -29,30 +29,41 @@
 
 <script>
 
-  highPubDensity = [51.51214599609375, -0.0823974609375];
-  britishMuseum = [51.519844, -0.126731];
-  trafalgarSquare = [51.506712, -0.127235];
-  boroughMarket = [51.505435, -0.090446];
-  tateModern = [51.508337, -0.099281];
-  hampstead = [51.556611, -0.163281];
-  stJamesPark = [51.576594, -0.035910];
-  stJohnsWood = [51.534410, -0.173710];
-  dublin = [53.346028, -6.279658];
-  munich = [48.135056, 11.576097];
-
+  // A set of places where the map may be centered, since it's a simulation and not based
+  // on the actual position of the user.
   var points = []
+  highPubDensity = [51.51214599609375, -0.0823974609375];
   points.push(highPubDensity);
+
+  britishMuseum = [51.519844, -0.126731];
   points.push(britishMuseum);
+
+  trafalgarSquare = [51.506712, -0.127235];
   points.push(trafalgarSquare);
+
+  boroughMarket = [51.505435, -0.090446];
   points.push(boroughMarket);
+
+  tateModern = [51.508337, -0.099281];
   points.push(tateModern);
+
+  hampstead = [51.556611, -0.163281];
   points.push(hampstead);
+
+  stJamesPark = [51.576594, -0.035910];
   points.push(stJamesPark);
+
+  stJohnsWood = [51.534410, -0.173710];
   points.push(stJohnsWood);
+
+  dublin = [53.346028, -6.279658];
   points.push(dublin);
+
+  munich = [48.135056, 11.576097];
   points.push(munich);
-  let myLat, myLon;
+
   // Assign a random point of interest
+  let myLat, myLon;
   [myLat, myLon] = points[Math.floor(Math.random() * points.length)];
 
   var mymap = L.map('mapid').setView([myLat, myLon], 16);
@@ -98,6 +109,7 @@
   iconMap.set("cafe", cafeIcon);
   iconMap.set("restaurant", restaurantIcon);
 
+  // Add base map
   L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={{mapbox_token}}', {
     maxZoom: 18,
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
@@ -109,27 +121,25 @@
   }).addTo(mymap);
 
   // Type of amenity (pub, cafe, bar, restaurant, ...)
-  var amenity = "restaurant";
+  //var amenity = "restaurant";
+  var amenity = "pub";
 
   // This is where I'm located
   L.marker([myLat, myLon], {icon: personIcon}).addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
 
   // Add data points
-  //$.post("http://localhost:18080/features",
   $.post("/features",
     JSON.stringify({ "amenity": amenity, "lat": myLat, "lon": myLon }),
     function(data) {
       data.forEach(function(obj) {
-        //console.log(obj.name);
-        // FIXME toggle icon value based on amenity
-        L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)}).addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
+        L.marker(
+          [obj.lat, obj.lon],
+          {icon: iconMap.get(amenity)}).addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
       })
     },
     "json"
   );
-
 </script>
-
 </body>
 </html>
 
