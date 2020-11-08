@@ -17,6 +17,8 @@ import json
 #   $ export PGPORT=5432
 #
 
+useGeohash = False
+
 def db_connect():
   return psycopg2.connect(
     database=os.getenv("PGDATABASE", "defaultdb"),
@@ -82,7 +84,12 @@ def features():
       key_value
     FROM osm
     WHERE
-      ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)
+  """
+  if useGeohash:
+    sql += "geohash4 = SUBSTRING(%s FOR 4)"
+  else:
+    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)"
+  sql += """
       AND key_value && ARRAY[%s]
   )
   SELECT * FROM q1
@@ -93,8 +100,10 @@ def features():
   conn = get_db()
   with conn.cursor() as cur:
     try:
-      #cur.execute(sql, (lon, lat, lon, lat))
-      cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
+      if useGeohash:
+        cur.execute(sql, (lon, lat, geohash, "amenity=" + amenity))
+      else:
+        cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
       for row in cur:
         (name, dist_m, lat, lon, dt, kv) = row
         d = {}
@@ -115,6 +124,7 @@ def index():
 
 if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
+  useGeohash = (os.getenv("USE_GEOHASH", "false").lower() == "true")
   app.run(host='0.0.0.0', port=port, threaded=True, debug=True)
   # Shut down the DB connection when app quits
   with app.app_context():
