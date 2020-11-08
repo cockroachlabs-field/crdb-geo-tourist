@@ -45,7 +45,7 @@ $ export PGHOST=localhost
 $ export PGPORT=26257
 ```
 
-Optional: disable the use of the GIN index in favor of the primary key index, but geoash.
+Optional: disable the use of the GIN index in favor of the primary key index on the geoash substring.
 Try both ways (e.g. `unset USE_GEOHASH` vs. `export USE_GEOHASH=true`) and compare the
 time it takes to load the amenity icons in the browser.
 
