@@ -70,7 +70,6 @@ def features():
   geohash = Geohash.encode(lat, lon)
   obj["geohash"] = geohash
   print(json.dumps(obj))
-  # FIXME: Use the query that hits the spatial index (GIN)
   sql = """
   WITH q1 AS
   (
@@ -83,13 +82,10 @@ def features():
       key_value
     FROM osm
     WHERE
-      geohash4 = SUBSTRING(%s FOR 4)
-  """
-  sql += "AND key_value && '{amenity=" + amenity + "}'" # FIXME: how does this work with bind variables?
-  sql += """
+      ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)
+      AND key_value && ARRAY[%s]
   )
   SELECT * FROM q1
-  WHERE dist_m < 5.0E+03
   ORDER BY dist_m ASC
   LIMIT 10;
   """
@@ -97,7 +93,8 @@ def features():
   conn = get_db()
   with conn.cursor() as cur:
     try:
-      cur.execute(sql, (lon, lat, geohash))
+      #cur.execute(sql, (lon, lat, lon, lat))
+      cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
       for row in cur:
         (name, dist_m, lat, lon, dt, kv) = row
         d = {}
