@@ -126,6 +126,7 @@ def index():
 if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
   useGeohash = (os.getenv("USE_GEOHASH", "false").lower() == "true")
+  print("useGeohash = %s" % ("True" if useGeohash else "False"))
   app.run(host='0.0.0.0', port=port, threaded=True, debug=True)
   # Shut down the DB connection when app quits
   with app.app_context():

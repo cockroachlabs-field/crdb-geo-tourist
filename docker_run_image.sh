@@ -11,8 +11,8 @@ export PGDATABASE="defaultdb"
 export PGUSER="root"
 export PGPASSWORD=""
 export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
-export USE_GEOHASH=False
+export USE_GEOHASH=True
 
 docker pull $img:$tag
-docker run -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e MAPBOX_TOKEN --publish 18080:18080 $img
+docker run -e PGHOST -e PGPORT -e PGDATABASE -e PGUSER -e PGPASSWORD -e MAPBOX_TOKEN -e USE_GEOHASH --publish 18080:18080 $img
 
