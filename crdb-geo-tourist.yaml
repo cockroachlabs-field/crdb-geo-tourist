@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crdb-geo-tourist
+spec:
+  containers:
+  - name: crdb-geo
+    image: mgoddard/crdb-geo-tourist:1.0
+    imagePullPolicy: Always
+    env:
+      - name: PGHOST
+        value: ""
+      - name: PGPORT
+        value: "26257"
+      - name: PGDATABASE
+        value: "defaultdb"
+      - name: PGUSER
+        value: "root"
+      - name: PGPASSWORD
+        value: ""
+      - name: MAPBOX_TOKEN
+        value: "INSERT YOUR MAPBOX TOKEN VALUE HERE"
+      - name: USE_GEOHASH
+        value: "False"
+  restartPolicy: Always
+

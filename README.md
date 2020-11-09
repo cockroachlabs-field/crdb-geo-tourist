@@ -53,3 +53,22 @@ time it takes to load the amenity icons in the browser.
 $ export USE_GEOHASH=true
 ```
 
+## Rebuild the Docker image (optional)
+
+Edit Dockerfile as necessary, and then change `./docker_include.sh` to set
+`docker_id` and anything else you'd like to change.
+
+```
+$ ./docker_build_image.sh
+$ ./docker_tag_publish.sh
+
+```
+
+## Run the app via its Docker image
+
+Edit `./docker_run_image.sh`, changing the environment variables to suit your deployment.
+
+```
+$ ./docker_run_image.sh
+```
+

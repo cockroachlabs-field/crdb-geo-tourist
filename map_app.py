@@ -13,8 +13,8 @@ import json
 #
 # Prior to running, set the two required connection parameters as environment variables:
 #
-#   $ export PGHOST=192.168.1.4
-#   $ export PGPORT=5432
+#   $ export PGHOST=192.168.1.9
+#   $ export PGPORT=26257
 #
 
 useGeohash = False
@@ -23,7 +23,8 @@ def db_connect():
   return psycopg2.connect(
     database=os.getenv("PGDATABASE", "defaultdb"),
     user=os.getenv("PGUSER", "root"),
-    application_name="Map Client"
+    password=os.getenv("PGPASSWORD", ""),
+    application_name="CRDB Geo Tourist"
   )
 
 def get_db():
