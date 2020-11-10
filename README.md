@@ -28,6 +28,8 @@ CREATE TABLE osm
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
 
+**NOTE:** `./load_osm_stdin.py` will create this table and GIN index if they don't already exist.
+
 Load the data (see above) using [this script](./load_osm_stdin.py) as follows,
 after setting PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE to suit your
 deployment of CockroachDB:

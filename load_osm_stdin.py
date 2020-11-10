@@ -17,13 +17,14 @@ import fileinput
 #
 
 rows_per_batch = 10000 # Edit as necessary, but 10k rows is a good starting point
+database = os.getenv("PGDATABASE", "defaultdb")
 
 conn = None
 def get_db():
   global conn
   if conn is None:
     conn = psycopg2.connect(
-      database=os.getenv("PGDATABASE", "defaultdb")
+      database=database
       , user=os.getenv("PGUSER", "root")
       , port=int(os.getenv("PGPORT", "26257"))
       , host=os.getenv("PGHOST", "localhost")
@@ -56,19 +57,37 @@ def insert_row(sql, close=False):
   if close:
     close_db()
 
-"""
-CREATE TABLE osm
-(
-  id BIGINT
-  , date_time TIMESTAMP WITH TIME ZONE
-  , uid TEXT
-  , name TEXT
-  , key_value TEXT[]
-  , ref_point GEOGRAPHY
-  , geohash4 TEXT -- first N chars of geohash (here, 4 for box of about +/- 20 km)
-  , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, id ASC)
-);
-"""
+def setup_db():
+  conn = get_db()
+  with conn.cursor() as cur:
+    sql = """
+    SELECT COUNT(*) FROM crdb_internal.tables
+    WHERE name = 'osm' AND database_name = %s AND state = 'PUBLIC';
+    """
+    n = 0
+    cur.execute(sql, (database,))
+    n = cur.fetchone()[0]
+    if int(n) == 0:
+      sql = """
+      DROP TABLE IF EXISTS osm;
+      CREATE TABLE osm
+      (
+        id BIGINT
+        , date_time TIMESTAMP WITH TIME ZONE
+        , uid TEXT
+        , name TEXT
+        , key_value TEXT[]
+        , ref_point GEOGRAPHY
+        , geohash4 TEXT
+        , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, id ASC)
+      );
+      """
+      print("Creating osm table")
+      cur.execute(sql)
+      sql = "CREATE INDEX ON osm USING GIN(ref_point);"
+      print("Creating index on ref_point")
+      cur.execute(sql)
+      conn.commit()
 
 sql = "INSERT INTO osm (id, date_time, uid, name, key_value, ref_point, geohash4) VALUES "
 
@@ -78,6 +97,8 @@ bad_re = re.compile(r"^N rows: \d+$")
 n_rows_ins = 0 # Rows inserted
 n_line = 0 # Position in input file
 n_batch = 1
+
+setup_db()
 
 for line in fileinput.input():
   line = line.rstrip()

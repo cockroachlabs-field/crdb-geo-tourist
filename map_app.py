@@ -7,21 +7,16 @@ import logging
 import os
 import time
 from flask import Flask, request, Response, g, render_template
-from flask_cors import CORS, cross_origin
 import json
 
-#
-# Prior to running, set the two required connection parameters as environment variables:
-#
-#   $ export PGHOST=192.168.1.9
-#   $ export PGPORT=26257
-#
-
 useGeohash = False
+database = os.getenv("PGDATABASE", "defaultdb")
 
+# Environment variables influencing the connection:
+# PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE
 def db_connect():
   return psycopg2.connect(
-    database=os.getenv("PGDATABASE", "defaultdb"),
+    database=database,
     user=os.getenv("PGUSER", "root"),
     password=os.getenv("PGPASSWORD", ""),
     application_name="CRDB Geo Tourist"
@@ -39,28 +34,8 @@ def get_db():
   return g.db
 
 app = Flask(__name__)
-cors = CORS(app, resources={r'/features': {'origins': '*'}})
 with app.app_context():
   get_db()
-
-CHARSET = "utf-8"
-
-def insert_row(sql, do_commit=True):
-  conn = get_db()
-  with conn.cursor() as cur: # FIXME: Here's what it can fail due to closed connection
-    try:
-      cur.execute(sql)
-    except:
-      logging.debug("INSERT: {}".format(cur.statusmessage))
-      return
-  if do_commit:
-    try:
-      conn.commit()
-    except:
-      logging.debug("COMMIT: {}".format(cur.statusmessage))
-      print("Retrying commit() in 1 s")
-      time.sleep(1)
-      conn.commit()
 
 # Return a JSON list of the top 10 nearest features of type <amenity>
 # TODO: parameterize max. dist., limit; handle mutiple features
@@ -127,7 +102,10 @@ if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
   useGeohash = (os.getenv("USE_GEOHASH", "false").lower() == "true")
   print("useGeohash = %s" % ("True" if useGeohash else "False"))
-  app.run(host='0.0.0.0', port=port, threaded=True, debug=True)
+  is_debug = True
+  if "KUBERNETES_SERVICE_HOST" in os.environ:
+    is_debug = False
+  app.run(host='0.0.0.0', port=port, threaded=True, debug=is_debug)
   # Shut down the DB connection when app quits
   with app.app_context():
     get_db().close()
