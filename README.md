@@ -4,7 +4,7 @@
 
 ![Screenshot restaurants](./restaurants.jpg)
 
-<img src="./mobile_view.png" width="480" alt="Running on iPhone">
+<img src="./mobile_view.png" width="360" alt="Running on iPhone">
 
 ## Setup
 
