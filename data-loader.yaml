@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crdb-geo-loader
+spec:
+  containers:
+  - name: crdb-geo-loader
+    image: mgoddard/crdb-geo-tourist:1.0
+    imagePullPolicy: Always
+    env:
+      - name: PGHOST
+        value: "cockroachdb-public"
+      - name: PGPORT
+        value: "26257"
+      - name: PGDATABASE
+        value: "defaultdb"
+      - name: PGUSER
+        value: "root"
+      - name: PGPASSWORD
+        value: ""
+      - name: DATA_URL
+        value: "https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz"
+    command: ["/bin/bash", "-c"]
+    args: ["curl -s -k ${DATA_URL} | gunzip - | ./load_osm_stdin.py"]
+  restartPolicy: Never
+
