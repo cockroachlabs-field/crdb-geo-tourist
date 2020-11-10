@@ -4,7 +4,7 @@
 
 ![Screenshot restaurants](./restaurants.jpg)
 
-![Running on iPhone](./mobile_view.png)
+![Running on iPhone](./mobile_view.png | width=480)
 
 ## Setup
 
