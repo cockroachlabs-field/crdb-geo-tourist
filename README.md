@@ -4,6 +4,8 @@
 
 ![Screenshot restaurants](./restaurants.jpg)
 
+![Running on iPhone](./mobile_view.png)
+
 ## Setup
 
 [Data set](https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz): 1m
@@ -74,4 +76,31 @@ Edit `./docker_run_image.sh`, changing the environment variables to suit your de
 ```
 $ ./docker_run_image.sh
 ```
+
+## Deploy the app in Kubernetes (K8s)
+
+```
+$ kubectl describe service crdb-geo-tourist-lb
+Name:                     crdb-geo-tourist-lb
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 app=crdb-geo-tourist
+Type:                     LoadBalancer
+IP:                       10.63.243.111
+LoadBalancer Ingress:     35.188.226.10
+Port:                     <unset>  80/TCP
+TargetPort:               18080/TCP
+NodePort:                 <unset>  32456/TCP
+Endpoints:                10.60.2.7:18080,10.60.3.7:18080
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:
+  Type    Reason                Age    From                Message
+  ----    ------                ----   ----                -------
+  Normal  EnsuringLoadBalancer  8m40s  service-controller  Ensuring load balancer
+  Normal  EnsuredLoadBalancer   8m1s   service-controller  Ensured load balancer
+```
+
+Enter the value associated with `LoadBalancer Ingress:` into your Web browser to see the app running.
 
