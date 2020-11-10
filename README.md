@@ -28,13 +28,14 @@ CREATE TABLE osm
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
 
-Load the data (see above) using [this script](./load_osm_offset.py) as follows
-(PGUSER, PGPASSWORD, PGDATABASE may also need to be set, depending on your
-deployment of CockroachDB):
+Load the data (see above) using [this script](./load_osm_stdin.py) as follows,
+after setting PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE to suit your
+deployment of CockroachDB:
 ```
 $ export PGHOST=localhost
 $ export PGPORT=26257
-$ ./load_osm_no_staging.py osm_1m_eu.txt.gz 1000000 0
+
+$ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz | gunzip - | ./load_osm_stdin.py
 ```
 
 ## Run the app
