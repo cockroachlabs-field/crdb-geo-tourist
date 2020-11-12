@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Rectangles</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap&libraries=&v=weekly"
+      defer
+    ></script>
+    <script>
+    google.maps.Polygon.prototype.getBounds = function() {
+    var bounds = new google.maps.LatLngBounds();
+    var paths = this.getPaths();
+    var path;
+    for (var i = 0; i < paths.getLength(); i++) {
+        path = paths.getAt(i);
+        for (var ii = 0; ii < path.getLength(); ii++) {
+            bounds.extend(path.getAt(ii));
+        }
+    }
+    return bounds;
+    }
+    </script>
+    <style type="text/css">
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+
+      /* Optional: Makes the sample page fill the window. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script>
+      // This example adds a red rectangle to a map.
+      function initMap() {
+        const map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 11,
+          center: { lat: 52.68738, lng: 11.00000 },
+          mapTypeId: "terrain",
+        });
+        const rectangle = new google.maps.Rectangle({
+          strokeColor: "#2915a5",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#f0f0f0",
+          fillOpacity: 0.2,
+          map,
+          bounds: {
+            north: 72.253800,
+            south: 33.120960,
+            east: 34.225994,
+            west: -12.666450,
+          },
+        });
+        map.fitBounds(rectangle.getBounds());
+      }
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
+
