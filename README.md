@@ -10,7 +10,7 @@ new spatial capabilities in CockroachDB 20.2.  The scenario is this: in the web
 app, an icon represents the user, and this user is situated at a location
 randomly chosen from a set of destinations, each time the page is refreshed.
 Then, a REST call is made from the Javascript front end, including the type of
-_amenity_ to search for as well as the user's location.  Witin the Python Flask
+_amenity_ to search for as well as the user's location.  Within the Python Flask
 app, those values are featured in a SQL query against a CockroachDB instance
 loaded with spatial data.  This query uses the following spatial data types,
 operators, and indexes to find and return a set of the nearest amenities,
