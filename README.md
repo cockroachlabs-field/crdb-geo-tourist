@@ -148,7 +148,7 @@ $ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz | g
 ### Run the app locally, without Docker
 
 * Start the Python Flask app, which provides the data REST service and also serves the app's HTML template
-and static assets (PNG, CSS, JS file):
+and static assets (PNG, CSS, and JS files):
 
 ```
 $ export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
@@ -175,6 +175,64 @@ $ export USE_GEOHASH=true
 
 ### Deploy the app in Kubernetes (K8s)
 
+* You'll need access to some K8s environment.  Here, we describe doing this in Google's GKE.
+[Minikube](https://minikube.sigs.k8s.io/docs/), Amazon EKS, or Azure AKS would be viable alternatives.
+
+* What follows is partially derived from [these docs](https://github.com/cockroachdb/cockroach/tree/master/cloud/kubernetes).
+
+* The files in the `./k8s` subdirectory are used for a K8s deployment.  They are:
+  - [`deploy_k8s.sh`](./k8s/deploy_k8s.sh): script to deploy a 4 VM K8s cluster in GKE
+  - [`data-loader.yaml`](./k8s/data-loader.yaml): pod definition which loads the data
+  - [`crdb-geo-tourist.yaml`](./k8s/crdb-geo-tourist.yaml): app deployment and load balancer service
+
+* Change to the `./k8s` directory: `cd ./k8s/`
+
+* Edit `./deploy_k8s.sh`, changing any of the following:
+```
+MACHINETYPE="e2-standard-2"
+NAME="${USER}-geo-tourist"
+ZONE="us-east4-b"
+```
+* I suggest stepping through that script, doing steps 1 - 3, then waiting until your `cockroach-N`
+pods all show a `STATUS` of `Running`, as shown here:
+
+```
+$ kubectl get pods
+NAME                                READY   STATUS      RESTARTS   AGE
+cluster-init-67frx                  0/1     Completed   0          8h
+cockroachdb-0                       1/1     Running     0          8h
+cockroachdb-1                       1/1     Running     0          8h
+cockroachdb-2                       1/1     Running     0          8h
+```
+
+* Create table, index, and load data:
+```
+YAML="./data-loader.yaml"
+kubectl apply -f $YAML
+```
+
+Wait until `kubectl get pods` shows `Completed` for the loader process.
+This should take about 10 minutes.
+
+```
+$ kubectl get pods
+NAME                                READY   STATUS      RESTARTS   AGE
+crdb-geo-loader                     0/1     Completed   0          7h2m
+```
+
+* Remember to edit `./crdb-geo-tourist.yaml`, replacing `INSERT YOUR MAPBOX TOKEN VALUE HERE` with your
+MapBox token, and then apply this YAML file to start the Python Flask app:
+
+```
+YAML="./crdb-geo-tourist.yaml"
+kubectl apply -f $YAML
+```
+
+* Once that's running, as indicated by the output of `kubectl get pods`, you can describe your load balancer
+service to get its `LoadBalancer Ingress` value, which you can then paste into a web browser to view the app.
+**NOTE:** it may take a few tries of running this command before that field gets populated with a value.
+Here's an example:
+
 ```
 $ kubectl describe service crdb-geo-tourist-lb
 Name:                     crdb-geo-tourist-lb
@@ -197,8 +255,6 @@ Events:
   Normal  EnsuringLoadBalancer  8m40s  service-controller  Ensuring load balancer
   Normal  EnsuredLoadBalancer   8m1s   service-controller  Ensured load balancer
 ```
-
-Enter the value associated with `LoadBalancer Ingress:` into your Web browser to see the app running.
 
 ### If you need to rebuild the Docker image
 

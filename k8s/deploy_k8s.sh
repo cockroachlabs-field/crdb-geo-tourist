@@ -5,18 +5,18 @@ MACHINETYPE="e2-standard-2"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
 
-# Create the GKE K8s cluster
+# 1. Create the GKE K8s cluster
 gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=4
 
 ACCOUNT=$( gcloud info | perl -ne 'print "$1\n" if /^Account: \[([^@]+@[^\]]+)\]$/' )
 
 kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$ACCOUNT
 
-# Create the CockroachDB cluster
+# 2. Create the CockroachDB cluster
 YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cockroachdb-statefulset.yaml"
 kubectl apply -f $YAML
 
-# Initialize DB / cluster
+# 3. Initialize DB / cluster
 YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cluster-init.yaml"
 kubectl apply -f $YAML
 
@@ -34,7 +34,7 @@ cockroachdb-2                       1/1     Running     0          8h
 
 EoM
 
-# Create table, index, and load data
+# 4. Create table, index, and load data
 YAML="./data-loader.yaml"
 kubectl apply -f $YAML
 
@@ -48,11 +48,11 @@ crdb-geo-loader                     0/1     Completed   0          7h2m
 
 EoM
 
-# Start the Web UI
+# 5. Start the Web UI
 YAML="./crdb-geo-tourist.yaml"
 kubectl apply -f $YAML
 
-# Tear it all down
+# FINALLY: tear it all down
 YAML="./crdb-geo-tourist.yaml"
 kubectl delete -f $YAML
 YAML="./data-loader.yaml"
