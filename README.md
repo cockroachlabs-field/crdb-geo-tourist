@@ -38,8 +38,6 @@ various sizes.  A deeper discussion of this topic is available
 <img src="./mobile_view.png" width="360" alt="Running on iPhone">
 (App running in an iPhone, in Safari)
 
-The demo can be run locally, in a Docker container, or in K8s.
-
 ## Data
 
 The data set is a sample of an extract of the OpenStreetMap
@@ -76,15 +74,17 @@ CREATE INDEX ON osm USING GIN(ref_point);
 ```
 **NOTE:** `./load_osm_stdin.py` creates the `osm` table and the GIN index if they don't already exist.
 
-[The Flask app](./map_app.py) runs one of two variations of a query, depending on whether the
-environment variable `USE_GEOHASH` is set and, if so, its value (`true` or `false`), as shown in
-the following code block (line numbers have been added here).  The main difference is that, when
-`USE_GEOHASH` is set to `true`, the GIN index is not used, but rather the four character substring
-of the geohash of the point is used, which effectively constrains the search area to a +/- 20 km
-box.  This `geohash4` column is the leading component of the primary key, so is indexed, allowing
-this to perform very well while also having lower impact on data load speeds.  Now, if this query
-was more complex than "find me the N closest points within a radius of X", the GIN index would be
-preferable since it permits far more complex comparisons.
+[The Flask app](./map_app.py) runs one of two variations of a query, depending
+on whether the environment variable `USE_GEOHASH` is set and, if so, its value
+(`true` or `false`), as shown in the following code block (line numbers have
+been added here).  The main difference is that, when `USE_GEOHASH` is set to
+`true`, the GIN index is not used, but rather the four character substring of
+the geohash of the point is used, which effectively constrains the search area
+to a +/- 20 km box (see lines 14 - 17).  This `geohash4` column is the leading
+component of the primary key, so is indexed, allowing this to perform very well
+while also having lower impact on data load speeds.  Now, if this query was
+more complex than "find me the N closest points within a radius of X", the GIN
+index would be preferable since it permits far more complex comparisons.
 
 ```
  1	  sql = """
@@ -117,9 +117,27 @@ preferable since it permits far more complex comparisons.
 28	  """
 ```
 
-Load the data (see above) using [this script](./load_osm_stdin.py) as follows,
-after setting PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE to suit your
-deployment of CockroachDB:
+## Run the app in one of 3 ways: (1) locally, (2) locally, but with app in a Docker container, (3) in Kubernetes (K8s)
+
+### Sign up for MapBox and get a token
+
+To render the maps in the browser, the app uses
+[Leaflet](https://leafletjs.com/) and base maps from
+[MapBox](https://www.mapbox.com/).  MapBox will permit use of its maps only if you include a token
+in the URL to their map tile service (within your app).  If you sign up for an account, you will
+be able to generate a token. In the section below, for running locally, I had saved my token in
+the file `../MapBox_Token.txt`.  For running in K8s, you'd need to edit
+`./k8s/crdb-geo-tourist.yaml` and replace `INSERT YOUR MAPBOX TOKEN VALUE HERE` with your token.
+
+### If running locally, with or without Docker
+
+* Download, install, and start a CockroachDB cluster using version 20.2 or above.  Installation instructions
+can be found [here](https://www.cockroachlabs.com/docs/stable/install-cockroachdb-mac.html), and the startup
+procesure is documented [here](https://www.cockroachlabs.com/docs/v20.2/start-a-local-cluster).  The default
+user is `root` and the default database is `defaultdb`, so these values don't need to be set.
+
+* Load the data (see above) using [this script](./load_osm_stdin.py):
+
 ```
 $ export PGHOST=localhost
 $ export PGPORT=26257
@@ -127,7 +145,10 @@ $ export PGPORT=26257
 $ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz | gunzip - | ./load_osm_stdin.py
 ```
 
-## Run the app
+### Run the app locally, without Docker
+
+* Start the Python Flask app, which provides the data REST service and also serves the app's HTML template
+and static assets (PNG, CSS, JS file):
 
 ```
 $ export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
@@ -135,34 +156,24 @@ $ export PGHOST=localhost
 $ export PGPORT=26257
 ```
 
-Optional: disable the use of the GIN index in favor of the primary key index on the geoash substring.
-Try both ways (e.g. `unset USE_GEOHASH` vs. `export USE_GEOHASH=true`) and compare the
-time it takes to load the amenity icons in the browser.
+### Run the app via its Docker image
 
-```
-$ export USE_GEOHASH=true
-```
-
-## Rebuild the Docker image (optional)
-
-Edit Dockerfile as necessary, and then change `./docker_include.sh` to set
-`docker_id` and anything else you'd like to change.
-
-```
-$ ./docker_build_image.sh
-$ ./docker_tag_publish.sh
-
-```
-
-## Run the app via its Docker image
-
-Edit `./docker_run_image.sh`, changing the environment variables to suit your deployment.
+* Edit `./docker_run_image.sh`, changing environment variables as necessary to suit your deployment.
 
 ```
 $ ./docker_run_image.sh
 ```
 
-## Deploy the app in Kubernetes (K8s)
+Optional: stop the app, disable the use of the GIN index in favor of the
+primary key index on the geoash substring, then restart the app.  Try both ways
+(e.g. `unset USE_GEOHASH` vs. `export USE_GEOHASH=true`) and compare the time
+it takes to load the amenity icons in the browser.
+
+```
+$ export USE_GEOHASH=true
+```
+
+### Deploy the app in Kubernetes (K8s)
 
 ```
 $ kubectl describe service crdb-geo-tourist-lb
@@ -188,4 +199,15 @@ Events:
 ```
 
 Enter the value associated with `LoadBalancer Ingress:` into your Web browser to see the app running.
+
+### If you need to rebuild the Docker image
+
+Edit Dockerfile as necessary, and then change `./docker_include.sh` to set
+`docker_id` and anything else you'd like to change.
+
+```
+$ ./docker_build_image.sh
+$ ./docker_tag_publish.sh
+
+```
 
