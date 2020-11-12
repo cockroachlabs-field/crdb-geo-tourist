@@ -38,16 +38,27 @@ various sizes.  A deeper discussion of this topic is available
 <img src="./mobile_view.png" width="360" alt="Running on iPhone">
 (App running in an iPhone, in Safari)
 
-## Setup
-
 The demo can be run locally, in a Docker container, or in K8s.
 
-[Data set](https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz): 1m
-points from OpenStreetMap's Planet Dump, all in Europe
+## Data
 
-[DDL and sample SQL queries](./osm_crdb.sql): The above mentioned data set is
-loaded into one table which has a primary key and one secondary index.  Here is
-the DDL:
+The data set (see below) is a sample of an extract of the OpenStreetMap
+Planet Dump which is accessible from [here](https://wiki.openstreetmap.org/wiki/Planet.osm).
+The `planet-latest.osm.pbf` file was downloaded (2020-08-01) and then processed
+using [Osmosis](https://github.com/openstreetmap/osmosis/releases) as
+documented in [this script](./osm/planet_osm_extract.sh).  The bounding box
+specified for the extract was `--bounding-box top=72.253800 left=-12.666450 bottom=33.120960 right=34.225994`,
+corresponding to the area shown in the figure below.  The result of this operation
+was a 36 GB Bzip'd XML file (not included here).  This intermediate file was then
+processed using [this Perl script](./osm/extract_points_from_osm_xml.pl), with the
+result being piped through Gzip to produce a [smaller data
+set](https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz) consisting of 1 million points.
+
+![Boundary of OSM data extract](./osm/OSM_extracted_region.jpg)
+
+[DDL and sample SQL queries](./osm/osm_crdb.sql): The data set is loaded into
+one table which has a primary key and one secondary index.  Here is the DDL:
+
 ```
 DROP TABLE IF EXISTS osm;
 CREATE TABLE osm
@@ -63,7 +74,6 @@ CREATE TABLE osm
 );
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
-
 **NOTE:** `./load_osm_stdin.py` will create this table and GIN index if they don't already exist.
 
 Load the data (see above) using [this script](./load_osm_stdin.py) as follows,
