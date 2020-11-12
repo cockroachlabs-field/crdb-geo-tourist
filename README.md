@@ -42,7 +42,7 @@ The demo can be run locally, in a Docker container, or in K8s.
 
 ## Data
 
-The data set (see below) is a sample of an extract of the OpenStreetMap
+The data set is a sample of an extract of the OpenStreetMap
 Planet Dump which is accessible from [here](https://wiki.openstreetmap.org/wiki/Planet.osm).
 The `planet-latest.osm.pbf` file was downloaded (2020-08-01) and then processed
 using [Osmosis](https://github.com/openstreetmap/osmosis/releases) as
@@ -74,7 +74,48 @@ CREATE TABLE osm
 );
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
-**NOTE:** `./load_osm_stdin.py` will create this table and GIN index if they don't already exist.
+**NOTE:** `./load_osm_stdin.py` creates the `osm` table and the GIN index if they don't already exist.
+
+[The Flask app](./map_app.py) runs one of two variations of a query, depending on whether the
+environment variable `USE_GEOHASH` is set and, if so, its value (`true` or `false`), as shown in
+the following code block (line numbers have been added here).  The main difference is that, when
+`USE_GEOHASH` is set to `true`, the GIN index is not used, but rather the four character substring
+of the geohash of the point is used, which effectively constrains the search area to a +/- 20 km
+box.  This `geohash4` column is the leading component of the primary key, so is indexed, allowing
+this to perform very well while also having lower impact on data load speeds.  Now, if this query
+was more complex than "find me the N closest points within a radius of X", the GIN index would be
+preferable since it permits far more complex comparisons.
+
+```
+ 1	  sql = """
+ 2	  WITH q1 AS
+ 3	  (
+ 4	    SELECT
+ 5	      name,
+ 6	      ST_Distance(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point)::NUMERIC(9, 2) dist_m,
+ 7	      ST_Y(ref_point::GEOMETRY) lat,
+ 8	      ST_X(ref_point::GEOMETRY) lon,
+ 9	      date_time,
+10	      key_value
+11	    FROM osm
+12	    WHERE
+13	  """
+14	  if useGeohash:
+15	    sql += "geohash4 = SUBSTRING(%s FOR 4)"
+16	  else:
+17	    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)"
+18	  sql += """
+19	      AND key_value && ARRAY[%s]
+20	  )
+21	  SELECT * FROM q1
+22	  """
+23	  if useGeohash:
+24	    sql += "WHERE dist_m < 5.0E+03"
+25	  sql += """
+26	  ORDER BY dist_m ASC
+27	  LIMIT 10;
+28	  """
+```
 
 Load the data (see above) using [this script](./load_osm_stdin.py) as follows,
 after setting PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE to suit your

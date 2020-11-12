@@ -69,6 +69,10 @@ def features():
       AND key_value && ARRAY[%s]
   )
   SELECT * FROM q1
+  """
+  if useGeohash:
+    sql += "WHERE dist_m < 5.0E+03"
+  sql += """
   ORDER BY dist_m ASC
   LIMIT 10;
   """
