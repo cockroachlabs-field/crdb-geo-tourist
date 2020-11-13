@@ -29,7 +29,7 @@
 
 <script>
 
-  // A set of places where the map may be centered, since it's a simulation and not based
+  // A set of places where the map will intially be centered, since it's a simulation and not based
   // on the actual position of the user.
   var points = []
   highPubDensity = [51.51214599609375, -0.0823974609375];
@@ -125,21 +125,54 @@
   var amenityTypes = ["restaurant", "pub", "cafe", "bar"];
   var amenity = amenityTypes[Math.floor(Math.random() * amenityTypes.length)];
 
-  // This is where I'm located
-  L.marker([myLat, myLon], {icon: personIcon}).addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
+  // Auto-pan the map around
+  /*
+  setInterval(function () {
+    var currentPos = mymap.getCenter();
+    mymap.panTo([
+      currentPos.lat + 0.001,
+      currentPos.lng + 0.001
+    ])
+  }, 2000);
+  */
 
-  // Add data points
-  $.post("/features",
-    JSON.stringify({ "amenity": amenity, "lat": myLat, "lon": myLon }),
-    function(data) {
-      data.forEach(function(obj) {
-        L.marker(
-          [obj.lat, obj.lon],
-          {icon: iconMap.get(amenity)}).addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
-      })
-    },
-    "json"
-  );
+  var allMarkers = [];
+  function getFeatures(pos, amenity)
+  {
+    for (var i = 0; i < allMarkers.length; i++)
+    {
+      mymap.removeLayer(allMarkers[i]);
+    }
+    allMarkers = [];
+    // This is where I'm located
+    var m =  L.marker(pos, {icon: personIcon});
+    allMarkers.push(m);
+    m.addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
+    //console.log("lat: " + pos.lat + ", lon: " + pos.lng);
+
+    // Add data points
+    $.post("/features",
+      JSON.stringify({ "amenity": amenity, "lat": pos.lat, "lon": pos.lng}),
+      function(data) {
+        data.forEach(function(obj) {
+          m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
+          allMarkers.push(m);
+          m.addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
+        })
+      },
+      "json"
+    );
+  }
+
+  var myCoords = L.latLng(myLat, myLon);
+  getFeatures({lat: myLat, lng: myLon}, amenity);
+
+  // Fires when map stops moving
+  mymap.on("moveend", function () {
+    //console.log(mymap.getCenter().toString());
+    getFeatures(mymap.getCenter(), amenity);
+  });
+
 </script>
 </body>
 </html>
