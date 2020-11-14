@@ -32,41 +32,43 @@
   // A set of places where the map will intially be centered, since it's a simulation and not based
   // on the actual position of the user.
   var points = []
-  highPubDensity = [51.51214599609375, -0.0823974609375];
+  var highPubDensity = L.latLng(51.51214599609375, -0.0823974609375);
   points.push(highPubDensity);
 
-  britishMuseum = [51.519844, -0.126731];
+  var britishMuseum = L.latLng(51.519844, -0.126731);
   points.push(britishMuseum);
 
-  trafalgarSquare = [51.506712, -0.127235];
+  var trafalgarSquare = L.latLng(51.506712, -0.127235);
   points.push(trafalgarSquare);
 
-  boroughMarket = [51.505435, -0.090446];
+  var boroughMarket = L.latLng(51.505435, -0.090446);
   points.push(boroughMarket);
 
-  tateModern = [51.508337, -0.099281];
+  var tateModern = L.latLng(51.508337, -0.099281);
   points.push(tateModern);
 
-  hampstead = [51.556611, -0.163281];
-  points.push(hampstead);
-
-  dublin = [53.346028, -6.279658];
+  var dublin = L.latLng(53.346028, -6.279658);
   points.push(dublin);
 
-  munich = [48.135056, 11.576097];
+  var munich = L.latLng(48.135056, 11.576097);
   points.push(munich);
 
-  leMarais = [48.857744, 2.357768];
+  var leMarais = L.latLng(48.857744, 2.357768);
   points.push(leMarais);
 
-  trastere = [41.886071, 12.467422];
+  var trastere = L.latLng(41.886071, 12.467422);
   points.push(trastere);
 
-  // Assign a random point of interest
-  let myLat, myLon;
-  [myLat, myLon] = points[Math.floor(Math.random() * points.length)];
+  var sydney = L.latLng(-33.865043, 151.205635);
+  points.push(sydney);
 
-  var mymap = L.map('mapid').setView([myLat, myLon], 16);
+  var auckland = L.latLng(-36.839815, 174.755420);
+  points.push(auckland);
+
+  // Assign a random point of interest
+  var myPos = points[Math.floor(Math.random() * points.length)];
+
+  var mymap = L.map('mapid').setView(myPos, 16);
 
   var personIcon = L.icon({
     iconUrl: '/static/person_icon.png',
@@ -164,8 +166,7 @@
     );
   }
 
-  var myCoords = L.latLng(myLat, myLon);
-  getFeatures({lat: myLat, lng: myLon}, amenity);
+  getFeatures(myPos, amenity);
 
   // Fires when map stops moving
   mymap.on("moveend", function () {
