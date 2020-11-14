@@ -19,7 +19,7 @@ spec:
       - name: PGPASSWORD
         value: ""
       - name: DATA_URL
-        value: "https://storage.googleapis.com/crl-goddard-gis/osm_250k.txt.gz"
+        value: "https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz"
     command: ["/bin/bash", "-c"]
     args: ["curl -s -k ${DATA_URL} | gunzip - | ./load_osm_stdin.py"]
   restartPolicy: Never
