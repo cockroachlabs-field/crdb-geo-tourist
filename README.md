@@ -50,7 +50,7 @@ corresponding to the area shown in the figure below.  The result of this operati
 was a 36 GB Bzip'd XML file (not included here).  This intermediate file was then
 processed using [this Perl script](./osm/extract_points_from_osm_xml.pl), with the
 result being piped through Gzip to produce a [smaller data
-set](https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz) consisting of 1 million points.
+set](https://storage.googleapis.com/crl-goddard-gis/osm_250k.txt.gz) containing points in the areas the app focuses on.
 
 ![Boundary of OSM data extract](./osm/OSM_extracted_region.jpg)
 
@@ -142,7 +142,7 @@ user is `root` and the default database is `defaultdb`, so these values don't ne
 $ export PGHOST=localhost
 $ export PGPORT=26257
 
-$ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_1m_eu.txt.gz | gunzip - | ./load_osm_stdin.py
+$ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_250k.txt.gz | gunzip - | ./load_osm_stdin.py
 ```
 
 ### Run the app locally, without Docker
