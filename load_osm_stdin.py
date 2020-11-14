@@ -19,6 +19,18 @@ import fileinput
 rows_per_batch = 10000 # Edit as necessary, but 10k rows is a good starting point
 database = os.getenv("PGDATABASE", "defaultdb")
 
+# This is the list of sites where our "tourist" will initially appear upon a page load
+sites = []
+sites.append({"name": "High density pub area, London", "lat": 51.51214599609375, "lon": -0.0823974609375})
+sites.append({"name": "British Museum", "lat": 51.519844, "lon": -0.126731})
+sites.append({"name": "Trafalgar Square", "lat": 51.506712, "lon": -0.127235})
+sites.append({"name": "Borough Market", "lat": 51.505435, "lon": -0.090446})
+sites.append({"name": "Tate Modern", "lat": 51.508337, "lon": -0.099281})
+sites.append({"name": "Dublin", "lat": 53.346028, "lon": -6.279658})
+sites.append({"name": "Munich", "lat": 48.135056, "lon": 11.576097})
+sites.append({"name": "Le Marais", "lat": 48.857744, "lon": 2.357768})
+sites.append({"name": "Trastevere", "lat": 41.886071, "lon": 12.467422})
+
 conn = None
 def get_db():
   global conn
@@ -87,6 +99,22 @@ def setup_db():
       sql = "CREATE INDEX ON osm USING GIN(ref_point);"
       print("Creating index on ref_point")
       cur.execute(sql)
+      # Table of positions for the user
+      sql = """
+      DROP TABLE IF EXISTS tourist_locations;
+      CREATE TABLE tourist_locations
+      (
+        name TEXT PRIMARY KEY
+        , lat FLOAT8
+        , lon FLOAT8
+      );
+      """
+      print("Creating tourist_locations table")
+      cur.execute(sql)
+      sql = "INSERT INTO tourist_locations (name, lat, lon) VALUES (%s, %s, %s);"
+      print("Populating tourist_locations table")
+      for s in sites:
+        cur.execute(sql, (s["name"], s["lat"], s["lon"]))
       conn.commit()
 
 sql = "INSERT INTO osm (id, date_time, uid, name, key_value, ref_point, geohash4) VALUES "

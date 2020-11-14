@@ -21,54 +21,56 @@
       width: 100%;
     }
   </style>
-
 </head>
-<body>
 
-<div id="mapid"></div>
+<body onload="setInitialView();">
+
+  <div id="mapid"></div>
 
 <script>
+  // Type of amenity (pub, cafe, bar, restaurant, ...)
+  var amenityTypes = ["restaurant", "pub", "cafe", "bar"];
+  var amenity = amenityTypes[Math.floor(Math.random() * amenityTypes.length)];
+
+  var allMarkers = [];
+  function getFeatures(pos, amenity)
+  {
+    for (var i = 0; i < allMarkers.length; i++)
+    {
+      mymap.removeLayer(allMarkers[i]);
+    }
+    allMarkers = [];
+    // This is where I'm located
+    var m =  L.marker(pos, {icon: personIcon});
+    allMarkers.push(m);
+    m.addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
+    //console.log("lat: " + pos.lat + ", lon: " + pos.lng);
+
+    // Add data points
+    $.post("/features",
+      JSON.stringify({ "amenity": amenity, "lat": pos.lat, "lon": pos.lng}),
+      function(data) {
+        data.forEach(function(obj) {
+          m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
+          allMarkers.push(m);
+          m.addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
+        })
+      },
+      "json"
+    );
+  }
 
   // A set of places where the map will intially be centered, since it's a simulation and not based
-  // on the actual position of the user.
-  var points = []
-  var highPubDensity = L.latLng(51.51214599609375, -0.0823974609375);
-  points.push(highPubDensity);
-
-  var britishMuseum = L.latLng(51.519844, -0.126731);
-  points.push(britishMuseum);
-
-  var trafalgarSquare = L.latLng(51.506712, -0.127235);
-  points.push(trafalgarSquare);
-
-  var boroughMarket = L.latLng(51.505435, -0.090446);
-  points.push(boroughMarket);
-
-  var tateModern = L.latLng(51.508337, -0.099281);
-  points.push(tateModern);
-
-  var dublin = L.latLng(53.346028, -6.279658);
-  points.push(dublin);
-
-  var munich = L.latLng(48.135056, 11.576097);
-  points.push(munich);
-
-  var leMarais = L.latLng(48.857744, 2.357768);
-  points.push(leMarais);
-
-  var trastere = L.latLng(41.886071, 12.467422);
-  points.push(trastere);
-
-  var sydney = L.latLng(-33.865043, 151.205635);
-  points.push(sydney);
-
-  var auckland = L.latLng(-36.839815, 174.755420);
-  points.push(auckland);
-
-  // Assign a random point of interest
-  var myPos = points[Math.floor(Math.random() * points.length)];
-
-  var mymap = L.map('mapid').setView(myPos, 16);
+  // on the actual position of the user.  These points come from the /sites endpoing of map_app.py.
+  var mymap = L.map('mapid');
+  function setInitialView() {
+    $.get("/sites", function(data) {
+      pt = L.latLng(data);
+      console.log("Tourist location: " + pt);
+      mymap.setView(pt, 16);
+      getFeatures(pt, amenity);
+    });
+  }
 
   var personIcon = L.icon({
     iconUrl: '/static/person_icon.png',
@@ -123,57 +125,11 @@
     zoomOffset: -1
   }).addTo(mymap);
 
-  // Type of amenity (pub, cafe, bar, restaurant, ...)
-  var amenityTypes = ["restaurant", "pub", "cafe", "bar"];
-  var amenity = amenityTypes[Math.floor(Math.random() * amenityTypes.length)];
-
-  // Auto-pan the map around
-  /*
-  setInterval(function () {
-    var currentPos = mymap.getCenter();
-    mymap.panTo([
-      currentPos.lat + 0.001,
-      currentPos.lng + 0.001
-    ])
-  }, 2000);
-  */
-
-  var allMarkers = [];
-  function getFeatures(pos, amenity)
-  {
-    for (var i = 0; i < allMarkers.length; i++)
-    {
-      mymap.removeLayer(allMarkers[i]);
-    }
-    allMarkers = [];
-    // This is where I'm located
-    var m =  L.marker(pos, {icon: personIcon});
-    allMarkers.push(m);
-    m.addTo(mymap).bindPopup("<b>Show me the closest " + amenity + "s!</b>").openPopup();
-    //console.log("lat: " + pos.lat + ", lon: " + pos.lng);
-
-    // Add data points
-    $.post("/features",
-      JSON.stringify({ "amenity": amenity, "lat": pos.lat, "lon": pos.lng}),
-      function(data) {
-        data.forEach(function(obj) {
-          m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
-          allMarkers.push(m);
-          m.addTo(mymap).bindPopup("<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters");
-        })
-      },
-      "json"
-    );
-  }
-
-  getFeatures(myPos, amenity);
-
   // Fires when map stops moving
   mymap.on("moveend", function () {
     //console.log(mymap.getCenter().toString());
     getFeatures(mymap.getCenter(), amenity);
   });
-
 </script>
 </body>
 </html>

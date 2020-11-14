@@ -37,6 +37,25 @@ app = Flask(__name__)
 with app.app_context():
   get_db()
 
+# Return a JSON list of the sites where the tourist may be located
+@app.route("/sites", methods = ['GET'])
+def sites():
+  sql = """
+  SELECT lat, lon
+  FROM tourist_locations
+  ORDER BY RANDOM()
+  LIMIT 1;
+  """
+  rv = {}
+  conn = get_db()
+  with conn.cursor() as cur:
+    try:
+      cur.execute(sql)
+      (rv["lat"], rv["lng"]) = cur.fetchone()
+    except:
+      logging.debug("Search: status message: {}".format(cur.statusmessage))
+  return Response(json.dumps(rv), status=200, mimetype="application/json")
+
 # Return a JSON list of the top 10 nearest features of type <amenity>
 # TODO: parameterize max. dist., limit; handle mutiple features
 @app.route("/features", methods = ['POST'])
