@@ -50,7 +50,8 @@ corresponding to the area shown in the figure below.  The result of this operati
 was a 36 GB Bzip'd XML file (not included here).  This intermediate file was then
 processed using [this Perl script](./osm/extract_points_from_osm_xml.pl), with the
 result being piped through Gzip to produce a [smaller data
-set](https://storage.googleapis.com/crl-goddard-gis/osm_250k.txt.gz) containing points in the areas the app focuses on.
+set](https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz) containing
+points in the areas the app focuses on.
 
 ![Boundary of OSM data extract](./osm/OSM_extracted_region.jpg)
 
@@ -73,6 +74,25 @@ CREATE TABLE osm
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
 **NOTE:** `./load_osm_stdin.py` creates the `osm` table and the GIN index if they don't already exist.
+
+There is an additional table, `tourist_locations` (see below), which contains the set of places where
+our "tourist" might be situated when the page loads.  This is populated by `load_osm_stdin.py`.  Only
+locations for which `enabled` is `TRUE` will be used, so the number of possible locations can be
+managed by manipulating the existing rows in this table, or by adding new ones, so long as the new
+points lie within the area shown in the rectangular area on the above map.
+
+```
+defaultdb=# show columns from tourist_locations;
+ column_name | data_type | is_nullable | column_default | generation_expression |  indices  | is_hidden
+-------------+-----------+-------------+----------------+-----------------------+-----------+-----------
+ name        | STRING    | f           |                |                       | {primary} | f
+ lat         | FLOAT8    | t           |                |                       | {}        | f
+ lon         | FLOAT8    | t           |                |                       | {}        | f
+ enabled     | BOOL      | t           | true           |                       | {}        | f
+(4 rows)
+
+Time: 34.470 ms
+```
 
 [The Flask app](./map_app.py) runs one of two variations of a query, depending
 on whether the environment variable `USE_GEOHASH` is set and, if so, its value
@@ -254,6 +274,17 @@ Events:
   ----    ------                ----   ----                -------
   Normal  EnsuringLoadBalancer  8m40s  service-controller  Ensuring load balancer
   Normal  EnsuredLoadBalancer   8m1s   service-controller  Ensured load balancer
+```
+
+* To view the admin UI, set up port forwarding to your CockroachDB deployment:
+```
+kubectl port-forward cockroachdb-0 8080
+```
+Once this is done, clicking [this link](http://localhost:8080/) should cause your browser to open this UI.
+
+* A SQL client can be started as well:
+```
+kubectl run cockroachdb -it --image=cockroachdb/cockroach --rm --restart=Never -- sql --insecure --host=cockroachdb-public
 ```
 
 ### If you need to rebuild the Docker image
