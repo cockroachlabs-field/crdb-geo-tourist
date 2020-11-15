@@ -107,6 +107,7 @@ def setup_db():
         name TEXT PRIMARY KEY
         , lat FLOAT8
         , lon FLOAT8
+        , enabled BOOLEAN DEFAULT TRUE
       );
       """
       print("Creating tourist_locations table")

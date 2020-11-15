@@ -43,10 +43,11 @@ def sites():
   sql = """
   SELECT lat, lon
   FROM tourist_locations
+  WHERE enabled = TRUE
   ORDER BY RANDOM()
   LIMIT 1;
   """
-  rv = {}
+  rv = { "lat": 51.506712, "lon": -0.127235 } # Default tourist location, if none are enabled
   conn = get_db()
   with conn.cursor() as cur:
     try:
