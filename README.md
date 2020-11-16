@@ -298,3 +298,8 @@ $ ./docker_tag_publish.sh
 
 ```
 
+## References
+
+1. [Geohash precision as a function of length](https://gis.stackexchange.com/questions/115280/what-is-the-precision-of-a-geohash)
+
+

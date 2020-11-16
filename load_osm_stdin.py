@@ -104,10 +104,12 @@ def setup_db():
       DROP TABLE IF EXISTS tourist_locations;
       CREATE TABLE tourist_locations
       (
-        name TEXT PRIMARY KEY
+        name TEXT
         , lat FLOAT8
         , lon FLOAT8
         , enabled BOOLEAN DEFAULT TRUE
+        , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
+        , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
       );
       """
       print("Creating tourist_locations table")
