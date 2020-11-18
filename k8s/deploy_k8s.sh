@@ -1,12 +1,15 @@
 #!/bin/bash
 
 # 2 vCPU, 8 GB RAM, $0.075462/hour
-MACHINETYPE="e2-standard-2"
+#MACHINETYPE="e2-standard-2"
+
+# 4	vCPU, 16 GB RAM, $0.134012/hour
+MACHINETYPE="e2-standard-4"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
 
 # 1. Create the GKE K8s cluster
-gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=4
+gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=5
 
 ACCOUNT=$( gcloud info | perl -ne 'print "$1\n" if /^Account: \[([^@]+@[^\]]+)\]$/' )
 

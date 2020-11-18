@@ -6,11 +6,11 @@
 (App shown running on a laptop)
 
 This is a simple Python Flask and Javascript app which illustrates some of the
-new spatial capabilities in CockroachDB 20.2.  The scenario is this: in the web
+new spatial capabilities in CockroachDB 20.2.  The scenario is this: in the Web
 app, an icon represents the user, and this user is situated at a location
 randomly chosen from a set of destinations, each time the page is refreshed.
-Then, a REST call is made from the Javascript front end, including the type of
-_amenity_ to search for as well as the user's location.  Within the Python Flask
+Then, an HTTP POST is made from the Javascript front end, including the user's
+location and the type of _amenity_ to search for.  Within the Python Flask
 app, those values are featured in a SQL query against a CockroachDB instance
 loaded with spatial data.  This query uses the following spatial data types,
 operators, and indexes to find and return a set of the nearest amenities,
@@ -22,11 +22,12 @@ sorted by distance:
 1. `ST_DWithin`: used in the `WHERE` clause of the SQL query to constrain the results to points within 5km of the user's location
 1. `ST_MakePoint`: converts the longitude and latitude representing the user's location into a `POINT`
 1. A GIN index on the `ref_point` column in the `osm` table speeds up the calculation done by `ST_DWithin`
+1. `ST_GeoHash`: to create the primary key for the `tourist_locations` table
 
-These types, operators, and the GIN index are familiar to users of
+These types and operators, together with the GIN index, will be familiar to users of
 [PostGIS](https://postgis.net/), the popular spatial extension available for
 PostgreSQL.  In CockroachDB, this layer was created from scratch and PostGIS
-was not used, but the PostGIS API was preserved.
+was not used, though its API was preserved.
 
 One aspect of CockroachDB's spatial capability is especially interesting: the
 way the spatial index works.  In order to preserve CockroachDB's unique ability
@@ -49,9 +50,9 @@ specified for the extract was `--bounding-box top=72.253800 left=-12.666450 bott
 corresponding to the area shown in the figure below.  The result of this operation
 was a 36 GB Bzip'd XML file (not included here).  This intermediate file was then
 processed using [this Perl script](./osm/extract_points_from_osm_xml.pl), with the
-result being piped through Gzip to produce a [smaller data
+result being piped through grep and, finally, gzip to produce a [smaller data
 set](https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz) containing
-points in the areas the app focuses on.
+a smaller set of points which lie in the areas the app focuses on.
 
 ![Boundary of OSM data extract](./osm/OSM_extracted_region.jpg)
 
@@ -78,20 +79,22 @@ CREATE INDEX ON osm USING GIN(ref_point);
 There is an additional table, `tourist_locations` (see below), which contains the set of places where
 our "tourist" might be situated when the page loads.  This is populated by `load_osm_stdin.py`.  Only
 locations for which `enabled` is `TRUE` will be used, so the number of possible locations can be
-managed by manipulating the existing rows in this table, or by adding new ones, so long as the new
-points lie within the area shown in the rectangular area on the above map.
+managed by manipulating the existing rows in this table, or by adding new ones, though the data set
+may need to be expanded to accommodate the new values.  The DDL for this table contains features
+worth mentioning: the goal was to use the `geohash` column as the primary key, but to also derive
+this value from the `lat` and `lon` values; lines 7 and 8 show how this can be acheived within
+CockroachDB:
 
 ```
-defaultdb=# show columns from tourist_locations;
- column_name | data_type | is_nullable | column_default | generation_expression |  indices  | is_hidden
--------------+-----------+-------------+----------------+-----------------------+-----------+-----------
- name        | STRING    | f           |                |                       | {primary} | f
- lat         | FLOAT8    | t           |                |                       | {}        | f
- lon         | FLOAT8    | t           |                |                       | {}        | f
- enabled     | BOOL      | t           | true           |                       | {}        | f
-(4 rows)
-
-Time: 34.470 ms
+1 CREATE TABLE tourist_locations
+2 (
+3   name TEXT
+4   , lat FLOAT8
+5   , lon FLOAT8
+6   , enabled BOOLEAN DEFAULT TRUE
+7   , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
+8   , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
+9 );
 ```
 
 [The Flask app](./map_app.py) runs one of two variations of a query, depending
