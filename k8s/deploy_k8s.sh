@@ -12,7 +12,7 @@ function run_cmd {
   echo "Press ENTER to run \"$cmd\""
   read
   bash -c "$cmd"
-  echo
+  yes '' | sed 3q
 }
 
 # Must have a MapBox "token" for this to work
@@ -89,6 +89,8 @@ run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 
 echo "Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE!"
+echo "Press ENTER to confirm you want to TEAR IT DOWN."
+read
 run_cmd kubectl delete -f ./crdb-geo-tourist.yaml
 run_cmd kubectl delete -f ./data-loader.yaml
 run_cmd kubectl delete -f example.yaml
