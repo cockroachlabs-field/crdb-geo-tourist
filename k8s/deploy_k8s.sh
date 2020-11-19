@@ -1,69 +1,89 @@
 #!/bin/bash
 
-# 2 vCPU, 8 GB RAM, $0.075462/hour
-#MACHINETYPE="e2-standard-2"
-
 # 4	vCPU, 16 GB RAM, $0.134012/hour
 MACHINETYPE="e2-standard-4"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
+N_NODES=4
+
+function run_cmd {
+  cmd="$@"
+  echo
+  echo "Press ENTER to run \"$cmd\""
+  read
+  bash -c "$cmd"
+  echo
+}
 
 # 1. Create the GKE K8s cluster
-gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=5
+echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#hosted-gke"
+run_cmd gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=$N_NODES
 
 ACCOUNT=$( gcloud info | perl -ne 'print "$1\n" if /^Account: \[([^@]+@[^\]]+)\]$/' )
-
 kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$ACCOUNT
 
 # 2. Create the CockroachDB cluster
-YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cockroachdb-statefulset.yaml"
-kubectl apply -f $YAML
+echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes"
+echo "Apply the CustomResourceDefinition (CRD) for the Operator"
+run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/config/crd/bases/crdb.cockroachlabs.com_crdbclusters.yaml
 
-# 3. Initialize DB / cluster
-YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cluster-init.yaml"
-kubectl apply -f $YAML
+echo "Apply the Operator manifest"
+OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/manifests/operator.yaml"
+run_cmd kubectl apply -f $OPERATOR_YAML
 
-cat <<EoM
+echo "Validate that the Operator is running"
+run_cmd kubectl get pods
 
-WAIT until the output from "kubectl get pods" shows a status of "Running" for
-the three 'cockroachdb-N' nodes; e.g.
+echo "Initialize the cluster"
+run_cmd kubectl apply -f example.yaml
 
-$ kubectl get pods
-NAME                                READY   STATUS      RESTARTS   AGE
-cluster-init-67frx                  0/1     Completed   0          8h
-cockroachdb-0                       1/1     Running     0          8h
-cockroachdb-1                       1/1     Running     0          8h
-cockroachdb-2                       1/1     Running     0          8h
+echo "Check that the pods were created"
+run_cmd kubectl get pods
 
-EoM
+echo "WAIT until the output of 'kubectl get pods' shows the three cockroachdb-N nodes in 'Running' state"
+run_cmd kubectl get pods
+
+echo "After a couple of minutes, rerun this check"
+run_cmd kubectl get pods
+
+# 3. Add DB user for app
+echo "Once all three show 'Running', use the SQL CLI to add a user for use by the Web app"
+echo "Press ENTER to run this SQL"
+read
+cat ./create_user.sql | kubectl exec -i cockroachdb-2 -- ./cockroach sql --certs-dir cockroach-certs
 
 # 4. Create table, index, and load data
-YAML="./data-loader.yaml"
-kubectl apply -f $YAML
+echo "Create DB tables and load data (takes about 3 minutes)"
+run_cmd kubectl apply -f ./data-loader.yaml
+echo "Run 'kubectl get pods' periodically until the line for 'crdb-geo-loader' shows STATUS of 'Completed'"
+run_cmd kubectl get pods
 
-cat <<EoM
+# 5. Start the CockroachDB DB Console
+LOCAL_PORT=18080
+echo "First, set up a tunnel from port $LOCAL_PORT on localhost to port 8080 on one of the CockroachDB pods"
+run_cmd nohup kubectl port-forward cockroachdb-1 --address 0.0.0.0 $LOCAL_PORT:8080 >> /tmp/k8s-port-forward.log 2>&1 </dev/null &
+URL="http://localhost:$LOCAL_PORT/"
+echo "Use 'tourist' as both login and password for this Admin UI"
+run_cmd open $URL
 
-WAIT until "kubectl get pods" shows "Completed" for the loader process; e.g.
-
-$ kubectl get pods
-NAME                                READY   STATUS      RESTARTS   AGE
-crdb-geo-loader                     0/1     Completed   0          7h2m
-
-EoM
-
-# 5. Start the Web UI
+# 6. Start the Web app
 YAML="./crdb-geo-tourist.yaml"
-kubectl apply -f $YAML
+echo "Edit $YAML, replacing 'INSERT YOUR MAPBOX TOKEN VALUE HERE' with your own MapBox token"
+echo "Then, apply this YAML file to start the Web app"
+run_cmd kubectl apply -f $YAML
 
-# FINALLY: tear it all down
-YAML="./crdb-geo-tourist.yaml"
-kubectl delete -f $YAML
-YAML="./data-loader.yaml"
-kubectl delete -f $YAML
-YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cockroachdb-statefulset.yaml"
-kubectl delete -f $YAML
-YAML="https://raw.githubusercontent.com/cockroachdb/cockroach/master/cloud/kubernetes/cluster-init.yaml"
-kubectl delete -f $YAML
+# 7. Get the IP address of the load balancer
+run_cmd kubectl describe service crdb-geo-tourist-lb
+echo "Look for the external IP of the app in the 'LoadBalancer Ingress:' line of output"
+sleep 30
+run_cmd kubectl describe service crdb-geo-tourist-lb
+echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 
-gcloud container clusters delete $NAME --zone=$ZONE --quiet
+echo "Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE!"
+run_cmd kubectl delete -f ./crdb-geo-tourist.yaml
+run_cmd kubectl delete -f ./data-loader.yaml
+run_cmd kubectl delete -f example.yaml
+run_cmd kubectl delete pv,pvc --all
+run_cmd kubectl delete -f $OPERATOR_YAML
+run_cmd gcloud container clusters delete $NAME --zone=$ZONE --quiet
 

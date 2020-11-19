@@ -15,9 +15,9 @@ spec:
       - name: PGDATABASE
         value: "defaultdb"
       - name: PGUSER
-        value: "root"
+        value: "tourist"
       - name: PGPASSWORD
-        value: ""
+        value: "tourist"
       - name: DATA_URL
         value: "https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz"
     command: ["/bin/bash", "-c"]
