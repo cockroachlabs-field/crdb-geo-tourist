@@ -15,6 +15,16 @@ function run_cmd {
   echo
 }
 
+# Must have a MapBox "token" for this to work
+if [ -z $MAPBOX_TOKEN ]
+then
+  echo
+  echo "Environment variable MAPBOX_TOKEN is not set."
+  echo "Please run 'export MAPBOX_TOKEN=\"your.mapbox.token\"' and then try running $0 again."
+  echo
+  exit 1
+fi
+
 # 1. Create the GKE K8s cluster
 echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#hosted-gke"
 run_cmd gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=$N_NODES
@@ -67,10 +77,9 @@ echo "Use 'tourist' as both login and password for this Admin UI"
 run_cmd open $URL
 
 # 6. Start the Web app
-YAML="./crdb-geo-tourist.yaml"
-echo "Edit $YAML, replacing 'INSERT YOUR MAPBOX TOKEN VALUE HERE' with your own MapBox token"
-echo "Then, apply this YAML file to start the Web app"
-run_cmd kubectl apply -f $YAML
+echo "Press ENTER to start the CockroachDB Geo Tourist app"
+read
+envsubst < ./crdb-geo-tourist.yaml | kubectl apply -f -
 
 # 7. Get the IP address of the load balancer
 run_cmd kubectl describe service crdb-geo-tourist-lb
