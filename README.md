@@ -86,15 +86,15 @@ this value from the `lat` and `lon` values; lines 7 and 8 show how this can be a
 CockroachDB:
 
 ```
-1 CREATE TABLE tourist_locations
-2 (
-3   name TEXT
-4   , lat FLOAT8
-5   , lon FLOAT8
-6   , enabled BOOLEAN DEFAULT TRUE
-7   , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
-8   , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
-9 );
+1	CREATE TABLE tourist_locations
+2	(
+3	  name TEXT
+4	  , lat FLOAT8
+5	  , lon FLOAT8
+6	  , enabled BOOLEAN DEFAULT TRUE
+7	  , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
+8	  , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
+9	);
 ```
 
 [The Flask app](./map_app.py) runs one of two variations of a query, depending
@@ -149,8 +149,12 @@ To render the maps in the browser, the app uses
 [MapBox](https://www.mapbox.com/).  MapBox will permit use of its maps only if you include a token
 in the URL to their map tile service (within your app).  If you sign up for an account, you will
 be able to generate a token. In the section below, for running locally, I had saved my token in
-the file `../MapBox_Token.txt`.  For running in K8s, you'd need to edit
-`./k8s/crdb-geo-tourist.yaml` and replace `INSERT YOUR MAPBOX TOKEN VALUE HERE` with your token.
+the file `../MapBox_Token.txt`. Assuming you've done the same, this will work for whichever
+deployment option you choose:
+
+```
+$ export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
+```
 
 ### If running locally, with or without Docker
 
@@ -174,7 +178,6 @@ $ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_250k.txt.gz | gu
 and static assets (PNG, CSS, and JS files):
 
 ```
-$ export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
 $ export PGHOST=localhost
 $ export PGPORT=26257
 ```
@@ -196,99 +199,28 @@ it takes to load the amenity icons in the browser.
 $ export USE_GEOHASH=true
 ```
 
-### Deploy the app in Kubernetes (K8s)
+### Deploy the app in Kubernetes (K8s) using the CockroachDB K8s operator
 
 * You'll need access to some K8s environment.  Here, we describe doing this in Google's GKE.
-[Minikube](https://minikube.sigs.k8s.io/docs/), Amazon EKS, or Azure AKS would be viable alternatives.
-
-* What follows is partially derived from [these docs](https://github.com/cockroachdb/cockroach/tree/master/cloud/kubernetes).
-
+* What follows is derived from [these docs](https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#install-the-operator).
 * The files in the `./k8s` subdirectory are used for a K8s deployment.  They are:
+
   - [`deploy_k8s.sh`](./k8s/deploy_k8s.sh): script to deploy a 4 VM K8s cluster in GKE
   - [`data-loader.yaml`](./k8s/data-loader.yaml): pod definition which loads the data
   - [`crdb-geo-tourist.yaml`](./k8s/crdb-geo-tourist.yaml): app deployment and load balancer service
+  - [`example.yaml`](./k8s/example.yaml): an edited version of the `example.yaml` file provided in the operator docs (above)
+  - [`create_user.sql`](./k8s/create_user.sql): used by the deployment script to create a role with a password
 
 * Change to the `./k8s` directory: `cd ./k8s/`
-
 * Edit `./deploy_k8s.sh`, changing any of the following:
+
 ```
-MACHINETYPE="e2-standard-2"
+MACHINETYPE="e2-standard-4"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
+N_NODES=4
 ```
-* I suggest stepping through that script, doing steps 1 - 3, then waiting until your `cockroach-N`
-pods all show a `STATUS` of `Running`, as shown here:
-
-```
-$ kubectl get pods
-NAME                                READY   STATUS      RESTARTS   AGE
-cluster-init-67frx                  0/1     Completed   0          8h
-cockroachdb-0                       1/1     Running     0          8h
-cockroachdb-1                       1/1     Running     0          8h
-cockroachdb-2                       1/1     Running     0          8h
-```
-
-* Create table, index, and load data:
-```
-YAML="./data-loader.yaml"
-kubectl apply -f $YAML
-```
-
-Wait until `kubectl get pods` shows `Completed` for the loader process.
-This should take about 10 minutes.
-
-```
-$ kubectl get pods
-NAME                                READY   STATUS      RESTARTS   AGE
-crdb-geo-loader                     0/1     Completed   0          7h2m
-```
-
-* Remember to edit `./crdb-geo-tourist.yaml`, replacing `INSERT YOUR MAPBOX TOKEN VALUE HERE` with your
-MapBox token, and then apply this YAML file to start the Python Flask app:
-
-```
-YAML="./crdb-geo-tourist.yaml"
-kubectl apply -f $YAML
-```
-
-* Once that's running, as indicated by the output of `kubectl get pods`, you can describe your load balancer
-service to get its `LoadBalancer Ingress` value, which you can then paste into a web browser to view the app.
-**NOTE:** it may take a few tries of running this command before that field gets populated with a value.
-Here's an example:
-
-```
-$ kubectl describe service crdb-geo-tourist-lb
-Name:                     crdb-geo-tourist-lb
-Namespace:                default
-Labels:                   <none>
-Annotations:              <none>
-Selector:                 app=crdb-geo-tourist
-Type:                     LoadBalancer
-IP:                       10.63.243.111
-LoadBalancer Ingress:     35.188.226.10
-Port:                     <unset>  80/TCP
-TargetPort:               18080/TCP
-NodePort:                 <unset>  32456/TCP
-Endpoints:                10.60.2.7:18080,10.60.3.7:18080
-Session Affinity:         None
-External Traffic Policy:  Cluster
-Events:
-  Type    Reason                Age    From                Message
-  ----    ------                ----   ----                -------
-  Normal  EnsuringLoadBalancer  8m40s  service-controller  Ensuring load balancer
-  Normal  EnsuredLoadBalancer   8m1s   service-controller  Ensured load balancer
-```
-
-* To view the admin UI, set up port forwarding to your CockroachDB deployment:
-```
-kubectl port-forward cockroachdb-0 8080
-```
-Once this is done, clicking [this link](http://localhost:8080/) should cause your browser to open this UI.
-
-* A SQL client can be started as well:
-```
-kubectl run cockroachdb -it --image=cockroachdb/cockroach --rm --restart=Never -- sql --insecure --host=cockroachdb-public
-```
+* Run the script and follow the prompts: `./deploy_k8s.sh`
 
 ### If you need to rebuild the Docker image
 

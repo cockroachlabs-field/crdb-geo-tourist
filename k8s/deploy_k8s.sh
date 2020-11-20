@@ -87,7 +87,7 @@ echo "Look for the external IP of the app in the 'LoadBalancer Ingress:' line of
 sleep 30
 run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
-
+echo
 echo "Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE!"
 echo "Press ENTER to confirm you want to TEAR IT DOWN."
 read

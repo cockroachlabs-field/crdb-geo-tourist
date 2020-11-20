@@ -10,7 +10,6 @@ export PGPORT="26257"
 export PGDATABASE="defaultdb"
 export PGUSER="root"
 export PGPASSWORD=""
-export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
 export USE_GEOHASH=True
 
 docker pull $img:$tag
