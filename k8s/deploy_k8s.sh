@@ -6,16 +6,7 @@ NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
 N_NODES=4
 
-function run_cmd {
-  cmd="$@"
-  echo
-  echo "Press ENTER to run \"$cmd\""
-  read
-  bash -c "$cmd"
-  yes '' | sed 3q
-}
-
-# Must have a MapBox "token" for this to work
+# A MapBox "token" is required to show the base map
 if [ -z $MAPBOX_TOKEN ]
 then
   echo
@@ -25,12 +16,30 @@ then
   exit 1
 fi
 
+function run_cmd {
+  cmd="$@"
+  echo
+  read -p "Type 'Y' ENTER to run \"$cmd\": " y_n
+  y_n=${y_n:-N}
+  case $y_n in
+    ([yY])
+      bash -c "$cmd"
+      ;;
+    (*)
+      echo "Skipping"
+      ;;
+  esac
+  yes '' | sed 3q
+}
+
 # 1. Create the GKE K8s cluster
 echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#hosted-gke"
 run_cmd gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=$N_NODES
-
-ACCOUNT=$( gcloud info | perl -ne 'print "$1\n" if /^Account: \[([^@]+@[^\]]+)\]$/' )
-kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$ACCOUNT
+if [ "$y_n" = "y" ] || [ "$y_n" = "Y" ]
+then
+  ACCOUNT=$( gcloud info | perl -ne 'print "$1\n" if /^Account: \[([^@]+@[^\]]+)\]$/' )
+  kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$ACCOUNT
+fi
 
 # 2. Create the CockroachDB cluster
 echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes"
@@ -70,8 +79,8 @@ run_cmd kubectl get pods
 
 # 5. Start the CockroachDB DB Console
 LOCAL_PORT=18080
-echo "First, set up a tunnel from port $LOCAL_PORT on localhost to port 8080 on one of the CockroachDB pods"
-run_cmd nohup kubectl port-forward cockroachdb-1 --address 0.0.0.0 $LOCAL_PORT:8080 >> /tmp/k8s-port-forward.log 2>&1 </dev/null &
+echo "First, we set up a tunnel from port $LOCAL_PORT on localhost to port 8080 on one of the CockroachDB pods"
+nohup kubectl port-forward cockroachdb-1 --address 0.0.0.0 $LOCAL_PORT:8080 >> /tmp/k8s-port-forward.log 2>&1 </dev/null &
 URL="http://localhost:$LOCAL_PORT/"
 echo "Use 'tourist' as both login and password for this Admin UI"
 run_cmd open $URL
