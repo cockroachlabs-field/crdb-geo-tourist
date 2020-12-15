@@ -200,14 +200,23 @@ $ export USE_GEOHASH=true
 
 ### Deploy the app in Kubernetes (K8s) using the CockroachDB K8s operator
 
-* You'll need access to some K8s environment.  Here, we describe doing this in Google's GKE.
+* You'll need access to a K8s environment.  This document describes running this in Google's GKE.
 * What follows is derived from [these docs](https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#install-the-operator).
+* The procedure outlined below demonstrates the following:
+  - Deploying the CockroachDB K8s operator
+  - Using that to spin up a 3 node CockroachDB cluster
+  - The DB Console
+  - Deployment of the CockroachDB Geo Tourist web app
+  - Loading data for the app into the CockroachDB cluster
+  - Performing a zero-downtime upgrade of the CockroachDB software
+  - Scaling the cluster from 3 to 4 pods
+  - Terminating one of the pods and verifying that the app remains available
 * The files in the `./k8s` subdirectory are used for a K8s deployment.  They are:
 
   - [`deploy_k8s.sh`](./k8s/deploy_k8s.sh): script to deploy a 4 VM K8s cluster in GKE
   - [`data-loader.yaml`](./k8s/data-loader.yaml): pod definition which loads the data
   - [`crdb-geo-tourist.yaml`](./k8s/crdb-geo-tourist.yaml): app deployment and load balancer service
-  - [`example.yaml`](./k8s/example.yaml): an edited version of the `example.yaml` file provided in the operator docs (above)
+  - [`cockroachdb.yaml`](./k8s/cockroachdb.yaml): an edited version of the `example.yaml` file provided in the operator docs (above)
   - [`create_user.sql`](./k8s/create_user.sql): used by the deployment script to create a role with a password
 
 * Change to the `./k8s` directory: `cd ./k8s/`

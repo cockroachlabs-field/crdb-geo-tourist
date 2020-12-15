@@ -4,7 +4,7 @@
 MACHINETYPE="e2-standard-4"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
-N_NODES=4
+N_NODES=5
 
 # A MapBox "token" is required to show the base map
 if [ -z $MAPBOX_TOKEN ]
@@ -16,21 +16,8 @@ then
   exit 1
 fi
 
-function run_cmd {
-  cmd="$@"
-  echo
-  read -p "Type 'Y' ENTER to run \"$cmd\": " y_n
-  y_n=${y_n:-N}
-  case $y_n in
-    ([yY])
-      bash -c "$cmd"
-      ;;
-    (*)
-      echo "Skipping"
-      ;;
-  esac
-  yes '' | sed 3q
-}
+dir=$( dirname $0 )
+. $dir/include.sh
 
 # 1. Create the GKE K8s cluster
 echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#hosted-gke"
@@ -54,7 +41,7 @@ echo "Validate that the Operator is running"
 run_cmd kubectl get pods
 
 echo "Initialize the cluster"
-run_cmd kubectl apply -f example.yaml
+run_cmd kubectl apply -f ./cockroachdb.yaml
 
 echo "Check that the pods were created"
 run_cmd kubectl get pods
@@ -78,12 +65,11 @@ echo "Run 'kubectl get pods' periodically until the line for 'crdb-geo-loader' s
 run_cmd kubectl get pods
 
 # 5. Start the CockroachDB DB Console
-LOCAL_PORT=18080
 echo "First, we set up a tunnel from port $LOCAL_PORT on localhost to port 8080 on one of the CockroachDB pods"
-nohup kubectl port-forward cockroachdb-1 --address 0.0.0.0 $LOCAL_PORT:8080 >> /tmp/k8s-port-forward.log 2>&1 </dev/null &
+port_fwd
 URL="http://localhost:$LOCAL_PORT/"
-echo "Use 'tourist' as both login and password for this Admin UI"
 run_cmd open $URL
+echo "** Use 'tourist' as both login and password for this Admin UI **"
 
 # 6. Start the Web app
 echo "Press ENTER to start the CockroachDB Geo Tourist app"
@@ -97,12 +83,40 @@ sleep 30
 run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 echo
-echo "Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE!"
+
+# 8. Perform an online rolling upgrade
+echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
+run_cmd kubectl apply -f ./rolling_upgrade.yaml
+echo "Check the DB Console to verify the version has changed"
+echo
+echo "If the DB Console becomes inaccessible, press ENTER to restart the port forwarding process"
+read
+port_fwd
+
+# 9. Scale out: add a node
+echo "Scale out by adding a new CockroachDB pod"
+run_cmd kubectl apply -f ./scale_out.yaml
+echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
+echo "Check the DB Console to verify the version has changed"
+echo
+
+# 10. Kill a node
+echo "Kill a CockroachDB pod"
+run_cmd kubectl delete pods cockroachdb-0
+echo "Reload the app page to verify it continues to run"
+echo "Also, note the state in the DB Console"
+echo "A new pod should be started to replace the failed pod"
+run_cmd kubectl get pods
+
+# 11. Tear it down
+echo
+echo
+echo "** Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE! **"
 echo "Press ENTER to confirm you want to TEAR IT DOWN."
 read
 run_cmd kubectl delete -f ./crdb-geo-tourist.yaml
 run_cmd kubectl delete -f ./data-loader.yaml
-run_cmd kubectl delete -f example.yaml
+run_cmd kubectl delete -f ./cockroachdb.yaml
 run_cmd kubectl delete pv,pvc --all
 run_cmd kubectl delete -f $OPERATOR_YAML
 run_cmd gcloud container clusters delete $NAME --zone=$ZONE --quiet
