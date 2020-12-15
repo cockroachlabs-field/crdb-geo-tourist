@@ -114,10 +114,16 @@ echo
 echo "** Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE! **"
 echo "Press ENTER to confirm you want to TEAR IT DOWN."
 read
-run_cmd kubectl delete -f ./crdb-geo-tourist.yaml
-run_cmd kubectl delete -f ./data-loader.yaml
-run_cmd kubectl delete -f ./cockroachdb.yaml
-run_cmd kubectl delete pv,pvc --all
-run_cmd kubectl delete -f $OPERATOR_YAML
+echo "Deleting the Geo Tourist app"
+kubectl delete -f ./crdb-geo-tourist.yaml
+echo "Deleting the data loader app"
+kubectl delete -f ./data-loader.yaml
+echo "Deleting the CockroachDB cluster"
+kubectl delete -f ./cockroachdb.yaml
+echo "Deleting the persistent volumes and persistent volume claims"
+kubectl delete pv,pvc --all
+echo "Deleting the K8s operator"
+kubectl delete -f $OPERATOR_YAML
+
 run_cmd gcloud container clusters delete $NAME --zone=$ZONE --quiet
 
