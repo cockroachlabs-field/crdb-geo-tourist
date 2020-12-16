@@ -203,7 +203,7 @@ $ export USE_GEOHASH=true
 
 * You'll need access to a K8s environment.  This document describes running this in Google's GKE.
 * What follows is derived from [these docs](https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#install-the-operator).
-* The procedure outlined below demonstrates the following:
+* **The procedure outlined below demonstrates the following:**
   - Deploying the CockroachDB K8s operator
   - Using that to spin up a 3 node CockroachDB cluster
   - The DB Console
