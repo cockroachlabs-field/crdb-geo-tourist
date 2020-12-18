@@ -124,6 +124,6 @@ echo "Deleting the persistent volumes and persistent volume claims"
 kubectl delete pv,pvc --all
 echo "Deleting the K8s operator"
 kubectl delete -f $OPERATOR_YAML
-
-run_cmd gcloud container clusters delete $NAME --zone=$ZONE --quiet
+echo "Deleting the GKE cluster"
+gcloud container clusters delete $NAME --zone=$ZONE --quiet
 
