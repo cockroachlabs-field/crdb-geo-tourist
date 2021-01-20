@@ -214,20 +214,22 @@ $ export USE_GEOHASH=true
   - Terminating one of the pods and verifying that the app remains available
 * The files in the `./k8s` subdirectory are used for a K8s deployment.  They are:
 
-  - [`deploy_k8s.sh`](./k8s/deploy_k8s.sh): script to deploy a 4 VM K8s cluster in GKE
+  - [`deploy_k8s.sh`](./k8s/deploy_k8s.sh): script to deploy a 5 VM K8s cluster in GKE
   - [`data-loader.yaml`](./k8s/data-loader.yaml): pod definition which loads the data
   - [`crdb-geo-tourist.yaml`](./k8s/crdb-geo-tourist.yaml): app deployment and load balancer service
   - [`cockroachdb.yaml`](./k8s/cockroachdb.yaml): an edited version of the `example.yaml` file provided in the operator docs (above)
   - [`create_user.sql`](./k8s/create_user.sql): used by the deployment script to create a role with a password
+  - [`rolling_upgrade.yaml`](./k8s/rolling_upgrade.yaml): used to perform a zero-downtime rolling upgrade of CockroachDB
+  - [`scale_out.yaml`](./k8s/scale_out.yaml): used to scale the 3 node cluster out to 4 nodes (also an online operation)
 
 * Change to the `./k8s` directory: `cd ./k8s/`
-* Edit `./deploy_k8s.sh`, changing any of the following:
+* Edit `./deploy_k8s.sh`, changing any of the following to suit your needs:
 
 ```
 MACHINETYPE="e2-standard-4"
 NAME="${USER}-geo-tourist"
 ZONE="us-east4-b"
-N_NODES=4
+N_NODES=5
 ```
 * Run the script and follow the prompts: `./deploy_k8s.sh`
 
