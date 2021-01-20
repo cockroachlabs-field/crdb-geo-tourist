@@ -60,7 +60,7 @@
   }
 
   // A set of places where the map will intially be centered, since it's a simulation and not based
-  // on the actual position of the user.  These points come from the /sites endpoing of map_app.py.
+  // on the actual position of the user.  These points come from the /sites endpoint of map_app.py.
   var mymap = L.map('mapid');
   function setInitialView() {
     $.get("/sites", function(data) {
