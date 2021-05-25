@@ -87,14 +87,7 @@ run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 echo
 
-# 8. Scale out: add a node
-echo "Scale out by adding a new CockroachDB pod"
-run_cmd kubectl apply -f ./scale_out.yaml
-echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
-echo "Check the DB Console to verify the version has changed"
-echo
-
-# 9. Perform an online rolling upgrade
+# 8. Perform an online rolling upgrade
 echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
 run_cmd kubectl apply -f ./rolling_upgrade.yaml
 echo "Check the DB Console to verify the version has changed"
@@ -102,6 +95,13 @@ echo
 echo "If the DB Console becomes inaccessible, press ENTER to restart the port forwarding process"
 read
 port_fwd
+
+# 9. Scale out: add a node
+echo "Scale out by adding a new CockroachDB pod"
+run_cmd kubectl apply -f ./scale_out.yaml
+echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
+echo "Check the DB Console to verify the version has changed"
+echo
 
 # 10. Kill a node
 echo "Kill a CockroachDB pod"
