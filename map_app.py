@@ -97,6 +97,7 @@ def features():
   """
   rv = []
   conn = get_db()
+  #print("SQL:\n" + sql + "\n")
   with conn.cursor() as cur:
     try:
       if useGeohash:

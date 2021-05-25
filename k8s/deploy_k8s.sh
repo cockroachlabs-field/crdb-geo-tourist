@@ -20,7 +20,7 @@ dir=$( dirname $0 )
 . $dir/include.sh
 
 # 1. Create the GKE K8s cluster
-echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes#hosted-gke"
+echo "See https://www.cockroachlabs.com/docs/v21.1/orchestrate-cockroachdb-with-kubernetes.html#hosted-gke"
 run_cmd gcloud container clusters create $NAME --zone=$ZONE --machine-type=$MACHINETYPE --num-nodes=$N_NODES
 if [ "$y_n" = "y" ] || [ "$y_n" = "Y" ]
 then
@@ -28,8 +28,11 @@ then
   kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$ACCOUNT
 fi
 
+# 1. (a) Set current context
+kubectl config use-context $NAME
+
 # 2. Create the CockroachDB cluster
-echo "See https://www.cockroachlabs.com/docs/v20.2/orchestrate-cockroachdb-with-kubernetes"
+echo "See https://www.cockroachlabs.com/docs/v21.1/orchestrate-cockroachdb-with-kubernetes"
 echo "Apply the CustomResourceDefinition (CRD) for the Operator"
 run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/config/crd/bases/crdb.cockroachlabs.com_crdbclusters.yaml
 
@@ -84,7 +87,14 @@ run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 echo
 
-# 8. Perform an online rolling upgrade
+# 8. Scale out: add a node
+echo "Scale out by adding a new CockroachDB pod"
+run_cmd kubectl apply -f ./scale_out.yaml
+echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
+echo "Check the DB Console to verify the version has changed"
+echo
+
+# 9. Perform an online rolling upgrade
 echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
 run_cmd kubectl apply -f ./rolling_upgrade.yaml
 echo "Check the DB Console to verify the version has changed"
@@ -92,13 +102,6 @@ echo
 echo "If the DB Console becomes inaccessible, press ENTER to restart the port forwarding process"
 read
 port_fwd
-
-# 9. Scale out: add a node
-echo "Scale out by adding a new CockroachDB pod"
-run_cmd kubectl apply -f ./scale_out.yaml
-echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
-echo "Check the DB Console to verify the version has changed"
-echo
 
 # 10. Kill a node
 echo "Kill a CockroachDB pod"

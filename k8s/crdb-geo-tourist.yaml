@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: crdb-geo-tourist
-        image: mgoddard/crdb-geo-tourist:1.0
+        image: mgoddard/crdb-geo-tourist:1.2
         imagePullPolicy: Always
         env:
           - name: PGHOST

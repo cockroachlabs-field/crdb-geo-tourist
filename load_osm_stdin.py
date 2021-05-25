@@ -96,7 +96,7 @@ def setup_db():
       """
       print("Creating osm table")
       cur.execute(sql)
-      sql = "CREATE INDEX ON osm USING GIN(ref_point);"
+      sql = "CREATE INDEX ON osm USING GIST(ref_point);"
       print("Creating index on ref_point")
       cur.execute(sql)
       # Table of positions for the user
