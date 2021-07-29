@@ -38,3 +38,22 @@ spec:
     name: cockroachdb/cockroach:v21.1.5
   nodes: 3
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crdb-lb
+  labels:
+    app: cockroachdb
+spec:
+  selector:
+    app.kubernetes.io/name: cockroachdb
+  ports:
+  - protocol: "TCP"
+    port: 8080
+    name: dbconsole
+  - protocol: "TCP"
+    port: 26257
+    name: sql
+  type: LoadBalancer
+

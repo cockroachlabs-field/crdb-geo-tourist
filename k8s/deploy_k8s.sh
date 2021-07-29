@@ -55,6 +55,11 @@ run_cmd kubectl get pods
 echo "After a couple of minutes, rerun this check"
 run_cmd kubectl get pods
 
+echo "Check to see whether the LB for DB Console and SQL is ready yet"
+echo "Look for the external IP of the app in the 'LoadBalancer Ingress:' line of output"
+run_cmd kubectl describe service crdb-lb
+echo "If not, run 'kubectl describe service crdb-lb' in a separate window"
+
 # 3. Add DB user for app
 echo "Once all three show 'Running', use the SQL CLI to add a user for use by the Web app"
 echo "Press ENTER to run this SQL"
@@ -68,11 +73,8 @@ echo "Run 'kubectl get pods' periodically until the line for 'crdb-geo-loader' s
 run_cmd kubectl get pods
 
 # 5. Start the CockroachDB DB Console
-echo "First, we set up a tunnel from port $LOCAL_PORT on localhost to port 8080 on one of the CockroachDB pods"
-port_fwd
-URL="http://localhost:$LOCAL_PORT/"
-run_cmd open $URL
-echo "** Use 'tourist' as both login and password for this Admin UI **"
+echo "Open a browser tab to port 8080 at the IP provided for the DB Console endpoint"
+echo "** Use 'tourist' as both login and password **"
 
 # 6. Start the Web app
 echo "Press ENTER to start the CockroachDB Geo Tourist app"
@@ -87,23 +89,7 @@ run_cmd kubectl describe service crdb-geo-tourist-lb
 echo "Once that IP is available, open the URL http://THIS_IP/ to see the app running"
 echo
 
-# 8. Scale out: add a node
-echo "Scale out by adding a new CockroachDB pod"
-run_cmd kubectl apply -f ./scale_out.yaml
-echo "Run 'kubectl get pods' a couple of times to verify 4 pods are running"
-echo "Check the DB Console to verify the version has changed"
-echo
-
-# 9. Perform an online rolling upgrade
-echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
-run_cmd kubectl apply -f ./rolling_upgrade.yaml
-echo "Check the DB Console to verify the version has changed"
-echo
-echo "If the DB Console becomes inaccessible, press ENTER to restart the port forwarding process"
-read
-port_fwd
-
-# 10. Kill a node
+# 8. Kill a node
 echo "Kill a CockroachDB pod"
 run_cmd kubectl delete pods cockroachdb-0
 echo "Reload the app page to verify it continues to run"
@@ -111,7 +97,13 @@ echo "Also, note the state in the DB Console"
 echo "A new pod should be started to replace the failed pod"
 run_cmd kubectl get pods
 
-# 11. Tear it down
+# 9. Perform an online rolling upgrade
+echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
+run_cmd kubectl apply -f ./rolling_upgrade.yaml
+echo "Check the DB Console to verify the version has changed"
+echo
+
+# 10. Tear it down
 echo
 echo
 echo "** Finally: tear it all down.  CAREFUL -- BE SURE YOU'RE DONE! **"
