@@ -169,7 +169,7 @@ user is `root` and the default database is `defaultdb`, so these values don't ne
 ```
 $ export PGHOST=localhost
 $ export PGPORT=26257
-$ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz | gunzip - | ./load_osm_stdin.py
+$ curl -s -k https://storage.googleapis.com/crl-goddard-gis/osm_50k_eu.txt.gz | gunzip - | ./load_osm_stdin.py
 ```
 
 ### Run the app locally, without Docker

@@ -30,6 +30,13 @@
   // Type of amenity (pub, cafe, bar, restaurant, ...)
   var amenityTypes = ["restaurant", "pub", "cafe", "bar"];
   var amenity = amenityTypes[Math.floor(Math.random() * amenityTypes.length)];
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams) {
+    var myParam = urlParams.get("amenity");
+    if (myParam && myParam.length > 0) {
+      amenity = myParam;
+    }
+  }
 
   var allMarkers = [];
   function getFeatures(pos, amenity)
