@@ -52,7 +52,7 @@ corresponding to the area shown in the figure below.  The result of this operati
 was a 36 GB Bzip'd XML file (not included here).  This intermediate file was then
 processed using [this Perl script](./osm/extract_points_from_osm_xml.pl), with the
 result being piped through grep and, finally, gzip to produce a [smaller data
-set](https://storage.googleapis.com/crl-goddard-gis/osm_475k_eu.txt.gz) containing
+set](https://storage.googleapis.com/crl-goddard-gis/osm_50k_eu.txt.gz) containing
 a smaller set of points which lie in the areas the app focuses on.
 
 ![Boundary of OSM data extract](./osm/OSM_extracted_region.jpg)
@@ -71,7 +71,8 @@ CREATE TABLE osm
   , key_value TEXT[]
   , ref_point GEOGRAPHY
   , geohash4 TEXT -- First 4 characters of geohash, corresponding to a box of about +/- 20 km
-  , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, id ASC)
+  , amenity TEXT
+  , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, amenity ASC, id ASC)
 );
 CREATE INDEX ON osm USING GIN(ref_point);
 ```
@@ -125,20 +126,19 @@ index would be preferable since it permits far more complex comparisons.
 12	    WHERE
 13	  """
 14	  if useGeohash:
-15	    sql += "geohash4 = SUBSTRING(%s FOR 4)"
+15	    sql += "geohash4 = SUBSTRING(%s FOR 4) AND amenity = %s"
 16	  else:
-17	    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)"
+17	    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE) AND key_value && ARRAY[%s]"
 18	  sql += """
-19	      AND key_value && ARRAY[%s]
-20	  )
-21	  SELECT * FROM q1
-22	  """
-23	  if useGeohash:
-24	    sql += "WHERE dist_m < 5.0E+03"
-25	  sql += """
-26	  ORDER BY dist_m ASC
-27	  LIMIT 10;
-28	  """
+19	  )
+20	  SELECT * FROM q1
+21	  """
+22	  if useGeohash:
+23	    sql += "WHERE dist_m < 5.0E+03"
+24	  sql += """
+25	  ORDER BY dist_m ASC
+26	  LIMIT 10;
+27	  """
 ```
 
 ## Run the app in one of 3 ways: (1) locally, (2) locally, but with app in a Docker container, (3) in Kubernetes (K8s)

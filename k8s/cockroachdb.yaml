@@ -35,7 +35,7 @@ spec:
       memory: "12Gi"
   tlsEnabled: true
   image:
-    name: cockroachdb/cockroach:v21.1.5
+    name: cockroachdb/cockroach:v21.1.7
   nodes: 3
 
 ---

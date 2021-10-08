@@ -37,7 +37,7 @@ echo "Apply the CustomResourceDefinition (CRD) for the Operator"
 run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/config/crd/bases/crdb.cockroachlabs.com_crdbclusters.yaml
 
 echo "Apply the Operator manifest"
-OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/manifests/operator.yaml"
+OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/install/operator.yaml"
 run_cmd kubectl apply -f $OPERATOR_YAML
 
 echo "Validate that the Operator is running"

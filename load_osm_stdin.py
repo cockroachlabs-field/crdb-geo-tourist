@@ -91,7 +91,8 @@ def setup_db():
         , key_value TEXT[]
         , ref_point GEOGRAPHY
         , geohash4 TEXT
-        , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, id ASC)
+        , amenity TEXT
+        , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, amenity ASC, id ASC)
       );
       """
       print("Creating osm table")
@@ -120,7 +121,7 @@ def setup_db():
         cur.execute(sql, (s["name"], s["lat"], s["lon"]))
       conn.commit()
 
-sql = "INSERT INTO osm (id, date_time, uid, name, key_value, ref_point, geohash4) VALUES "
+sql = "INSERT INTO osm (id, date_time, uid, name, key_value, ref_point, geohash4, amenity) VALUES "
 
 vals = []
 llre = re.compile(r"^-?\d+\.\d+$")
@@ -152,14 +153,18 @@ for line in fileinput.input():
   for w in re.split(r"\W+", name.lower()):
     if len(w) > 0:
       kv.append(w)
+  amenity = ""
   for x in kvagg.split('|'):
     if len(x) == 0:
       continue;
     x = html.unescape(x)
     x = re.sub(r"['\",{}]", "", x)
     kv.append(x)
+    if x.startswith("amenity"):
+      amenity = x.split("=")[1]
   row += ", '{" + ','.join(kv) + "}'"
   row += ", ST_MakePoint(" + lon + ", " + lat + ")::GEOGRAPHY, '" + geohash[0:4] + "'"
+  row += ", '" + amenity + "'"
   vals.append("(" + row + ")")
   if len(vals) % rows_per_batch == 0:
     print("Running INSERT for batch %d of %d rows" % (n_batch, rows_per_batch))

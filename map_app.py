@@ -81,11 +81,10 @@ def features():
     WHERE
   """
   if useGeohash:
-    sql += "geohash4 = SUBSTRING(%s FOR 4)"
+    sql += "geohash4 = SUBSTRING(%s FOR 4) AND amenity = %s"
   else:
-    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)"
+    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE) AND key_value && ARRAY[%s]"
   sql += """
-      AND key_value && ARRAY[%s]
   )
   SELECT * FROM q1
   """
@@ -101,7 +100,7 @@ def features():
   with conn.cursor() as cur:
     try:
       if useGeohash:
-        cur.execute(sql, (lon, lat, geohash, "amenity=" + amenity))
+        cur.execute(sql, (lon, lat, geohash, amenity))
       else:
         cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
       for row in cur:
