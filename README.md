@@ -141,6 +141,12 @@ index would be preferable since it permits far more complex comparisons.
 27	  """
 ```
 
+## Some extra SQL query examples
+
+[Here](./osm/osm_buffer_geojson_examples.sql) is an example showing a query to find all pubs within 300 meters
+of a path along the center of the Thames in central London.  It uses GeoJSON functions and
+[this nice UI](https://geojson.io/#map=14/51.5011/-0.1005).
+
 ## Run the app in one of 3 ways: (1) locally, (2) locally, but with app in a Docker container, (3) in Kubernetes (K8s)
 
 ### Sign up for MapBox and get a token
