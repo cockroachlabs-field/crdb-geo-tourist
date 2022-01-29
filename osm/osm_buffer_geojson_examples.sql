@@ -99,3 +99,20 @@ WITH q1 AS
 SELECT st_asgeojson(pubs)
 FROM q1;
 
+/* Find pubs along the route from Paddington Station to Tower Bridge area */
+WITH q1 AS
+(
+  SELECT
+    st_collect(ref_point::geometry) as pubs
+  FROM osm
+  WHERE
+    ST_DWithin
+    (
+      ST_GeomFromGeoJSON('{"type":"LineString","coordinates":[[-0.07604598999023438,51.50927666176991],[-0.17560958862304688,51.51664802308175]]}')::GEOGRAPHY,
+      ref_point, 500, TRUE
+    )
+    AND amenity = 'pub'
+)
+SELECT st_asgeojson(pubs)
+FROM q1;
+
