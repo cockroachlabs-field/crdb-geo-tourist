@@ -32,13 +32,16 @@ fi
 kubectl config use-context $NAME
 
 # 2. Create the CockroachDB cluster
-echo "See https://www.cockroachlabs.com/docs/v21.1/orchestrate-cockroachdb-with-kubernetes"
+echo "See https://www.cockroachlabs.com/docs/stable/deploy-cockroachdb-with-kubernetes.html"
 echo "Apply the CustomResourceDefinition (CRD) for the Operator"
-run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/config/crd/bases/crdb.cockroachlabs.com_crdbclusters.yaml
+run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.4.0/install/crds.yaml
 
 echo "Apply the Operator manifest"
-OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/install/operator.yaml"
+OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.4.0/install/operator.yaml"
 run_cmd kubectl apply -f $OPERATOR_YAML
+
+echo "Setting default namespace to the operator namespace"
+run_cmd kubectl config set-context --current --namespace=cockroach-operator-system
 
 echo "Validate that the Operator is running"
 run_cmd kubectl get pods
