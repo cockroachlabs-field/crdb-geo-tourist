@@ -1,20 +1,7 @@
-# Copyright 2020 The Cockroach Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 apiVersion: crdb.cockroachlabs.com/v1alpha1
 kind: CrdbCluster
 metadata:
+  # this translates to the name of the statefulset that is created
   name: cockroachdb
 spec:
   dataStore:
@@ -28,13 +15,19 @@ spec:
         volumeMode: Filesystem
   resources:
     requests:
-      cpu: "3"
-      memory: "12Gi"
+      cpu: 3
+      memory: 12Gi
     limits:
-      cpu: "3"
-      memory: "12Gi"
+      cpu: 3
+      memory: 12Gi
   tlsEnabled: true
+# You can set either a version of the db or a specific image name
+# cockroachDBVersion: v21.1.11
   image:
-    name: cockroachdb/cockroach:v22.1.4
+    name: cockroachdb/cockroach:v22.1.5
+  # nodes refers to the number of crdb pods that are created
+  # via the statefulset
   nodes: 3
+  additionalLabels:
+    crdb: is-cool
 
