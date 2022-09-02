@@ -28,19 +28,11 @@ spec:
     spec:
       containers:
       - name: crdb-geo-tourist
-        image: mgoddard/crdb-geo-tourist:1.4
+        image: mgoddard/crdb-geo-tourist:1.5
         imagePullPolicy: Always
         env:
-          - name: PGHOST
-            value: "cockroachdb-public"
-          - name: PGPORT
-            value: "26257"
-          - name: PGDATABASE
-            value: "defaultdb"
-          - name: PGUSER
-            value: "tourist"
-          - name: PGPASSWORD
-            value: "tourist"
+          - name: DB_URL
+            value: "postgres://tourist:tourist@cockroachdb-public:26257/defaultdb"
           - name: MAPBOX_TOKEN
             value: "$MAPBOX_TOKEN"
           - name: USE_GEOHASH

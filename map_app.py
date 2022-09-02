@@ -9,17 +9,23 @@ from flask import Flask, request, Response, g, render_template
 import json
 
 useGeohash = False
-database = os.getenv("PGDATABASE", "defaultdb")
 
-# Environment variables influencing the connection:
-# PGHOST, PGPORT, PGUSER, PGPASSWORD, and PGDATABASE
+#
+# Set the following environment variables:
+#
+#  export DB_URL="postgres://user:passwd@localhost:26257/defaultdb"
+#  export MAPBOX_TOKEN="Your MapBox Token"
+#  export FLASK_PORT=18080
+#  export USE_GEOHASH=true
+#
+
+db_url = os.getenv("DB_URL")
+if db_url is None:
+  print("Environment DB_URL must be set. Quitting.")
+  sys.exit(1)
+
 def db_connect():
-  return psycopg2.connect(
-    database=database,
-    user=os.getenv("PGUSER", "root"),
-    password=os.getenv("PGPASSWORD", ""),
-    application_name="CRDB Geo Tourist"
-  )
+  return psycopg2.connect(db_url, application_name="CRDB Geo Tourist")
 
 def get_db():
   if "db" not in g:

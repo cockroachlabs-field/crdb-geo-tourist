@@ -3,13 +3,9 @@
 . ./docker_include.sh
 
 img="$docker_id/$img_name"
-tag="1.2"
+tag="1.5"
 
-export PGHOST="host.docker.internal"
-export PGPORT="26257"
-export PGDATABASE="defaultdb"
-export PGUSER="tourist"
-export PGPASSWORD="tourist"
+export DB_URL="postgres://tourist:tourist@host.docker.internal:26257/defaultdb"
 export USE_GEOHASH=True
 
 docker pull $img:$tag

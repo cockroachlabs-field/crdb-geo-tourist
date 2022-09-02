@@ -1,5 +1,5 @@
 psycopg2-binary
-Flask
+Flask==2.1.0
 gunicorn
 python-geohash
 Geohash

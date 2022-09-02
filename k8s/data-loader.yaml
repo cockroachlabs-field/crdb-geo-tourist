@@ -5,19 +5,11 @@ metadata:
 spec:
   containers:
   - name: crdb-geo-loader
-    image: mgoddard/crdb-geo-tourist:1.4
+    image: mgoddard/crdb-geo-tourist:1.5
     imagePullPolicy: Always
     env:
-      - name: PGHOST
-        value: "cockroachdb-public"
-      - name: PGPORT
-        value: "26257"
-      - name: PGDATABASE
-        value: "defaultdb"
-      - name: PGUSER
-        value: "tourist"
-      - name: PGPASSWORD
-        value: "tourist"
+      - name: DB_URL
+        value: "postgres://tourist:tourist@cockroachdb-public:26257/defaultdb"
       - name: DATA_URL
         value: "https://storage.googleapis.com/crl-goddard-gis/osm_50k_eu.txt.gz"
     command: ["/bin/bash", "-c"]

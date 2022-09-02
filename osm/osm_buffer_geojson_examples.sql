@@ -15,7 +15,7 @@ select
   , amenity
   , key_value[array_upper(key_value, 1)]
 from osm
-where geohash4 = 'gcpv'i
+where geohash4 = 'gcpv'
 order by random() asc
 limit 20;
 

@@ -10,18 +10,23 @@ import re
 import fileinput
 
 #
-# Set the following environment variables, or use the PostgreSQL defaults:
-# PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE
+# Set the following environment variable:
+#
+#   export DB_URL="postgres://user:passwd@localhost:26257/defaultdb"
+#
+db_url = os.getenv("DB_URL")
+if db_url is None:
+  print("Environment DB_URL must be set. Quitting.")
+  sys.exit(1)
+
 #
 # curl -s -k http://localhost:8000/osm_1m_eu.txt.gz | gunzip - | ./load_osm_stdin.py
 #
 
 rows_per_batch = 10000 # Edit as necessary, but 10k rows is a good starting point
-database = os.getenv("PGDATABASE", "defaultdb")
 
 # This is the list of sites where our "tourist" will initially appear upon a page load
 sites = []
-sites.append({"name": "High density pub area, London", "lat": 51.51214599609375, "lon": -0.0823974609375})
 sites.append({"name": "British Museum", "lat": 51.519844, "lon": -0.126731})
 sites.append({"name": "Trafalgar Square", "lat": 51.506712, "lon": -0.127235})
 sites.append({"name": "Borough Market", "lat": 51.505435, "lon": -0.090446})
@@ -30,18 +35,14 @@ sites.append({"name": "Dublin", "lat": 53.346028, "lon": -6.279658})
 sites.append({"name": "Munich", "lat": 48.135056, "lon": 11.576097})
 sites.append({"name": "Le Marais", "lat": 48.857744, "lon": 2.357768})
 sites.append({"name": "Trastevere", "lat": 41.886071, "lon": 12.467422})
+sites.append({"name": "Prado Museum", "lat": 40.41367, "lon": -3.69185})
+sites.append({"name": "Mercado Antón Martín", "lat": 40.41170, "lon": -3.69850})
 
 conn = None
 def get_db():
   global conn
   if conn is None:
-    conn = psycopg2.connect(
-      database=database
-      , user=os.getenv("PGUSER", "root")
-      , port=int(os.getenv("PGPORT", "26257"))
-      , host=os.getenv("PGHOST", "localhost")
-      , application_name="OSM Data Loader"
-    )
+    conn = psycopg2.connect(db_url, application_name="OSM Data Loader")
   return conn
 
 def close_db():
@@ -73,53 +74,49 @@ def setup_db():
   conn = get_db()
   with conn.cursor() as cur:
     sql = """
-    SELECT COUNT(*) FROM crdb_internal.tables
-    WHERE name = 'osm' AND database_name = %s AND state = 'PUBLIC';
+    CREATE TABLE IF NOT EXISTS osm
+    (
+      id BIGINT
+      , date_time TIMESTAMP WITH TIME ZONE
+      , uid TEXT
+      , name TEXT
+      , key_value TEXT[]
+      , ref_point GEOGRAPHY
+      , geohash4 TEXT
+      , amenity TEXT
+      , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, amenity ASC, id ASC)
+    );
     """
-    n = 0
-    cur.execute(sql, (database,))
-    n = cur.fetchone()[0]
-    if int(n) == 0:
-      sql = """
-      DROP TABLE IF EXISTS osm;
-      CREATE TABLE osm
-      (
-        id BIGINT
-        , date_time TIMESTAMP WITH TIME ZONE
-        , uid TEXT
-        , name TEXT
-        , key_value TEXT[]
-        , ref_point GEOGRAPHY
-        , geohash4 TEXT
-        , amenity TEXT
-        , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, amenity ASC, id ASC)
-      );
-      """
-      print("Creating osm table")
-      cur.execute(sql)
-      sql = "CREATE INDEX ON osm USING GIST(ref_point);"
-      print("Creating index on ref_point")
-      cur.execute(sql)
-      # Table of positions for the user
-      sql = """
-      DROP TABLE IF EXISTS tourist_locations;
-      CREATE TABLE tourist_locations
-      (
-        name TEXT
-        , lat FLOAT8
-        , lon FLOAT8
-        , enabled BOOLEAN DEFAULT TRUE
-        , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
-        , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
-      );
-      """
-      print("Creating tourist_locations table")
-      cur.execute(sql)
-      sql = "INSERT INTO tourist_locations (name, lat, lon) VALUES (%s, %s, %s);"
-      print("Populating tourist_locations table")
-      for s in sites:
-        cur.execute(sql, (s["name"], s["lat"], s["lon"]))
-      conn.commit()
+    print("Creating osm table")
+    cur.execute(sql)
+
+    # Create the spatial index
+    sql = "CREATE INDEX IF NOT EXISTS osm_geo_idx ON osm USING GIST(ref_point);"
+    print("Creating index on ref_point")
+    cur.execute(sql)
+
+    # Table of positions for the user
+    sql = """
+    DROP TABLE IF EXISTS tourist_locations;
+    CREATE TABLE tourist_locations
+    (
+      name TEXT
+      , lat FLOAT8
+      , lon FLOAT8
+      , enabled BOOLEAN DEFAULT TRUE
+      , geohash CHAR(9) AS (ST_GEOHASH(ST_SETSRID(ST_MAKEPOINT(lon, lat), 4326), 9)) STORED
+      , CONSTRAINT "primary" PRIMARY KEY (geohash ASC)
+    );
+    """
+    print("Creating tourist_locations table")
+    cur.execute(sql)
+
+    # Populate that with some potential tourist locations
+    sql = "INSERT INTO tourist_locations (name, lat, lon) VALUES (%s, %s, %s);"
+    print("Populating tourist_locations table")
+    for s in sites:
+      cur.execute(sql, (s["name"], s["lat"], s["lon"]))
+    conn.commit()
 
 sql = "INSERT INTO osm (id, date_time, uid, name, key_value, ref_point, geohash4, amenity) VALUES "
 
