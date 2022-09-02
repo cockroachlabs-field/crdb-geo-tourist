@@ -8,16 +8,6 @@ REGION="us-east4"
 
 NAME="${USER}-geo-tourist"
 
-# A MapBox "token" is required to show the base map
-if [ -z $MAPBOX_TOKEN ]
-then
-  echo
-  echo "Environment variable MAPBOX_TOKEN is not set."
-  echo "Please run 'export MAPBOX_TOKEN=\"your.mapbox.token\"' and then try running $0 again."
-  echo
-  exit 1
-fi
-
 dir=$( dirname $0 )
 . $dir/include.sh
 

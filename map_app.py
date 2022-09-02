@@ -14,7 +14,6 @@ useGeohash = False
 # Set the following environment variables:
 #
 #  export DB_URL="postgres://user:passwd@localhost:26257/defaultdb"
-#  export MAPBOX_TOKEN="Your MapBox Token"
 #  export FLASK_PORT=18080
 #  export USE_GEOHASH=true
 #
@@ -125,7 +124,7 @@ def features():
 
 @app.route("/")
 def index():
-  return render_template("index.html", mapbox_token=os.getenv("MAPBOX_TOKEN", "MAPBOX_TOKEN_NOT_SET"))
+  return render_template("index.html")
 
 if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))

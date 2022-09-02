@@ -149,20 +149,6 @@ of a path along the center of the Thames in central London.  It uses GeoJSON fun
 
 ## Run the app in one of 3 ways: (1) locally, (2) locally, but with app in a Docker container, (3) in Kubernetes (K8s)
 
-### Sign up for MapBox and get a token
-
-To render the maps in the browser, the app uses
-[Leaflet](https://leafletjs.com/) and base maps from
-[MapBox](https://www.mapbox.com/).  MapBox will permit use of its maps only if you include a token
-in the URL to their map tile service (within your app).  If you sign up for an account, you will
-be able to generate a token. In the section below, for running locally, I had saved my token in
-the file `../MapBox_Token.txt`. Assuming you've done the same, this will work for whichever
-deployment option you choose:
-
-```
-$ export MAPBOX_TOKEN=$( cat ../MapBox_Token.txt )
-```
-
 ### If running locally, with or without Docker
 
 * Download, install, and start a CockroachDB cluster using version 20.2 or above.  Installation instructions
