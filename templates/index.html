@@ -6,7 +6,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="/static/leaflet.css"/>
+  <link rel="stylesheet" href="/static/leaflet.contextmenu.css"/>
   <script src="/static/leaflet.js"></script>
+  <script src="/static/leaflet.contextmenu.js"></script>
   <script src="/static/jquery-3.5.1.min.js"></script>
   <link rel="icon" type="image/png" href="/static/crl-32x32.png" sizes="32x32">
 
@@ -66,9 +68,51 @@
     );
   }
 
+  // FIXME: is there a way to pass parameter in?
+  function setPub(e)
+  {
+    amenity = "pub";
+    getFeatures(mymap.getCenter(), amenity);
+  }
+
+  function setRestaurant(e)
+  {
+    amenity = "restaurant";
+    getFeatures(mymap.getCenter(), amenity);
+  }
+
+  function setCafe(e)
+  {
+    amenity = "cafe";
+    getFeatures(mymap.getCenter(), amenity);
+  }
+
+  function setBar(e)
+  {
+    amenity = "bar";
+    getFeatures(mymap.getCenter(), amenity);
+  }
+
+  var mymap = L.map('mapid' , {
+    contextmenu: true,
+      contextmenuWidth: 100,
+	      contextmenuItems: [{
+		      text: 'Pubs',
+		      callback: setPub
+	      }, {
+		      text: 'Restaurants',
+		      callback: setRestaurant
+	      }, {
+		      text: 'Cafes',
+		      callback: setCafe
+	      }, {
+		      text: 'Bars',
+		      callback: setBar
+	      }]
+  });
+
   // A set of places where the map will intially be centered, since it's a simulation and not based
   // on the actual position of the user.  These points come from the /sites endpoint of map_app.py.
-  var mymap = L.map('mapid');
   function setInitialView() {
     $.get("/sites", function(data) {
       pt = L.latLng(data);
