@@ -4,7 +4,7 @@ import Geohash
 import psycopg2
 import psycopg2.errorcodes
 import logging
-import os
+import os, sys
 from flask import Flask, request, Response, g, render_template
 import json
 
