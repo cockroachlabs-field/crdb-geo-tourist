@@ -238,6 +238,6 @@ $ ./docker_tag_publish.sh
 
 ## Reference
 
-![Geohash precision](./geohash_precision_wikipedia.png)
+<img src="./geohash_precision_wikipedia.png" width="360" alt="Geohash precision as a function of length">
 (source: Wikipedia)
 
