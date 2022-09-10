@@ -11,7 +11,7 @@ spec:
       - name: DB_URL
         value: "postgres://tourist:tourist@cockroachdb-public:26257/defaultdb"
       - name: DATA_URL
-        value: "https://storage.googleapis.com/crl-goddard-gis/osm_50k_eu.txt.gz"
+        value: "https://storage.googleapis.com/crl-goddard-gis/osm_eu_2022.09.01.txt.gz"
     command: ["/bin/bash", "-c"]
     args: ["curl -s -k ${DATA_URL} | gunzip - | ./load_osm_stdin.py"]
   restartPolicy: Never
