@@ -117,7 +117,7 @@ def features():
         d["dist_m"] = str(dist_m)
         d["lat"] = lat
         d["lon"] = lon
-        d["rating"] = "Rating: " + (str(rating) if rating is not None else "(not rated)")
+        d["rating"] = "Rating: " + (str(rating) + " out of 5" if rating is not None else "(not rated)")
         #print("Feature: " + json.dumps(d))
         rv.append(d)
     except:
