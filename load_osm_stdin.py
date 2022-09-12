@@ -145,6 +145,9 @@ setup_db()
 # Table "osm" must exist
 osm_table = Table("osm", MetaData(), autoload_with=engine)
 
+# Use any of these entities as search_hints
+addr_pat = re.compile(r"^addr:(?:city|postcode|street)=(.+)$")
+
 for line in fileinput.input():
   line = line.rstrip()
   n_line += 1
@@ -177,10 +180,10 @@ for line in fileinput.input():
       amenity = x.split("=")[1]
     # Location details: postcode, street, city
     # Example: addr:postcode=GU27 3HA|addr:street=Midhurst Road
-    elif x.startswith("addr:"):
-      addr = x.split("=")[1]
-      if len(addr) > 0:
-        search_hints.append(addr)
+    else:
+      m = addr_pat.match(x)
+      if m is not None:
+        search_hints.append(m.group(1))
   row_map = {
     "geohash4": geohash[:4],
     "amenity": amenity,
