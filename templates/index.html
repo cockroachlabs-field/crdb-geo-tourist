@@ -60,7 +60,7 @@
       function(data) {
         data.forEach(function(obj) {
           m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
-          var msg = "<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters (" + obj.lat + ", " + obj.lon + ")";
+          var msg = "<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters" + "<br/>" + obj.rating;
           var p = L.popup({autoPan: false}).setContent(msg);
           m.addTo(mymap).bindPopup(p);
           allMarkers.push(m);

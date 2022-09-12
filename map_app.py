@@ -81,7 +81,8 @@ def features():
       ST_Y(ref_point::GEOMETRY) lat,
       ST_X(ref_point::GEOMETRY) lon,
       date_time,
-      key_value
+      key_value,
+      rating
     FROM osm
     WHERE
   """
@@ -109,13 +110,14 @@ def features():
       else:
         cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
       for row in cur:
-        (name, dist_m, lat, lon, dt, kv) = row
+        (name, dist_m, lat, lon, dt, kv, rating) = row
         d = {}
         d["name"] = name
         d["amenity"] = amenity
         d["dist_m"] = str(dist_m)
         d["lat"] = lat
         d["lon"] = lon
+        d["rating"] = "Rating: " + (str(rating) if rating is not None else "(not rated)")
         #print("Feature: " + json.dumps(d))
         rv.append(d)
     except:

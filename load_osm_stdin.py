@@ -36,6 +36,8 @@ logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s", date
 # curl -s -k http://localhost:8000/osm_1m_eu.txt.gz | gunzip - | ./load_osm_stdin.py
 #
 
+N_COLS = 10 # Number of columns in the input data set
+
 rows_per_batch = 2048 # Edit as necessary
 
 # This is the list of sites where our "tourist" will initially appear upon a page load
@@ -99,6 +101,8 @@ def setup_db():
       , lon FLOAT NOT NULL
       , key_value TEXT[]
       , search_hints TEXT
+      , rating FLOAT
+      , rating_ts TIMESTAMP
       , ref_point GEOGRAPHY AS (ST_MakePoint(lon, lat)::GEOGRAPHY) STORED
       , CONSTRAINT "primary" PRIMARY KEY (geohash4 ASC, amenity ASC, id ASC)
     );
@@ -156,9 +160,9 @@ for line in fileinput.input():
     continue
   # 78347 <2018-08-09T22:29:35Z <366321 <63.4305942 <10.3921538 <Prinsenkrysset <highway=traffic_signals|u5r|u5r2|u5r2u|u5r2u7 <u5r2u7pmfxz8b
   a = line.split('<')
-  if 8 != len(a):
+  if N_COLS != len(a):
     continue
-  (id, dt, uid, lat, lon, name, kvagg, geohash) = a
+  (id, dt, uid, lat, lon, name, kvagg, geohash, rating, rating_ts) = a
   # (lat, lon) may have this format: 54°05.131'..., which is bogus
   if (not llre.match(lat)) or (not llre.match(lon)):
     continue
@@ -194,7 +198,9 @@ for line in fileinput.input():
     "lat": lat,
     "lon": lon,
     "key_value": kv,
-    "search_hints": ' '.join(search_hints)
+    "search_hints": ' '.join(search_hints),
+    "rating": rating if len(rating) > 0 else None,
+    "rating_ts": rating_ts if len(rating_ts) > 0 else None
   }
   rows.append(row_map)
   if len(rows) % rows_per_batch == 0:
