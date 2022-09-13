@@ -3,10 +3,13 @@
 import Geohash
 import psycopg2
 import psycopg2.errorcodes
+import sqlalchemy
+from sqlalchemy import create_engine, text
 import logging
 import os, sys
 from flask import Flask, request, Response, g, render_template
 import json
+import re
 
 useGeohash = False
 
@@ -23,23 +26,11 @@ if db_url is None:
   print("Environment DB_URL must be set. Quitting.")
   sys.exit(1)
 
-def db_connect():
-  return psycopg2.connect(db_url, application_name="CRDB Geo Tourist")
-
-def get_db():
-  if "db" not in g:
-    g.db = db_connect()
-  # Handle the case of a closed connection
-  try:
-    cur = g.db.cursor()
-    cur.execute("SELECT 1")
-  except psycopg2.OperationalError:
-    g.db = db_connect()
-  return g.db
+db_url = re.sub(r"^postgres", "cockroachdb", db_url)
+engine = create_engine(db_url, pool_size=20, pool_pre_ping=True,
+  connect_args = { "application_name": "CRDB Geo Tourist" })
 
 app = Flask(__name__)
-with app.app_context():
-  get_db()
 
 # Return a JSON list of the sites where the tourist may be located
 @app.route("/sites", methods = ['GET'])
@@ -51,14 +42,12 @@ def sites():
   ORDER BY RANDOM()
   LIMIT 1;
   """
+  stmt = text(sql)
   rv = { "lat": 51.506712, "lon": -0.127235 } # Default tourist location, if none are enabled
-  conn = get_db()
-  with conn.cursor() as cur:
-    try:
-      cur.execute(sql)
-      (rv["lat"], rv["lng"]) = cur.fetchone()
-    except:
-      logging.debug("Search: status message: {}".format(cur.statusmessage))
+  with engine.connect() as conn:
+    rs = conn.execute(stmt)
+    for row in rs:
+      (rv["lat"], rv["lng"]) = row
   return Response(json.dumps(rv), status=200, mimetype="application/json")
 
 # Return a JSON list of the top 10 nearest features of type <amenity>
@@ -77,7 +66,7 @@ def features():
   (
     SELECT
       name,
-      ST_Distance(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point)::NUMERIC(9, 2) dist_m,
+      ST_Distance(ST_MakePoint(:lon_val, :lat_val)::GEOGRAPHY, ref_point)::NUMERIC(9, 2) dist_m,
       ST_Y(ref_point::GEOMETRY) lat,
       ST_X(ref_point::GEOMETRY) lon,
       date_time,
@@ -87,9 +76,10 @@ def features():
     WHERE
   """
   if useGeohash:
-    sql += "geohash4 = SUBSTRING(%s FOR 4) AND amenity = %s"
+    sql += "geohash4 = SUBSTRING(:geohash FOR 4) AND amenity = :amenity"
   else:
-    sql += "ST_DWithin(ST_MakePoint(%s, %s)::GEOGRAPHY, ref_point, 5.0E+03, TRUE) AND key_value && ARRAY[%s]"
+    sql += "ST_DWithin(ST_MakePoint(:lon_val, :lat_val)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)"
+    sql += " AND key_value && ARRAY[:amenity]"
   sql += """
   )
   SELECT * FROM q1
@@ -101,27 +91,25 @@ def features():
   LIMIT 10;
   """
   rv = []
-  conn = get_db()
   #print("SQL:\n" + sql + "\n")
-  with conn.cursor() as cur:
-    try:
-      if useGeohash:
-        cur.execute(sql, (lon, lat, geohash, amenity))
-      else:
-        cur.execute(sql, (lon, lat, lon, lat, "amenity=" + amenity))
-      for row in cur:
-        (name, dist_m, lat, lon, dt, kv, rating) = row
-        d = {}
-        d["name"] = name
-        d["amenity"] = amenity
-        d["dist_m"] = str(dist_m)
-        d["lat"] = lat
-        d["lon"] = lon
-        d["rating"] = "Rating: " + (str(rating) + " out of 5" if rating is not None else "(not rated)")
-        #print("Feature: " + json.dumps(d))
-        rv.append(d)
-    except:
-      logging.debug("Search: status message: {}".format(cur.statusmessage))
+  stmt = None
+  if useGeohash:
+    stmt = text(sql).bindparams(lon_val=lon, lat_val=lat, geohash=geohash, amenity=amenity)
+  else:
+    stmt = text(sql).bindparams(lon_val=lon, lat_val=lat, geohash=geohash, amenity="amenity=" + amenity)
+  with engine.connect() as conn:
+    rs = conn.execute(stmt)
+    for row in rs:
+      (name, dist_m, lat, lon, dt, kv, rating) = row
+      d = {}
+      d["name"] = name
+      d["amenity"] = amenity
+      d["dist_m"] = str(dist_m)
+      d["lat"] = lat
+      d["lon"] = lon
+      d["rating"] = "Rating: " + (str(rating) + " out of 5" if rating is not None else "(not rated)")
+      #print("Feature: " + json.dumps(d))
+      rv.append(d)
   return Response(json.dumps(rv), status=200, mimetype="application/json")
 
 @app.route("/")
@@ -137,6 +125,5 @@ if __name__ == '__main__':
     is_debug = False
   app.run(host='0.0.0.0', port=port, threaded=True, debug=is_debug)
   # Shut down the DB connection when app quits
-  with app.app_context():
-    get_db().close()
+  engine.dispose()
 
