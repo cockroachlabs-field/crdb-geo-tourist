@@ -2,7 +2,7 @@
 
 ## Use the spatial features in CockroachDB to find pubs, restaurants, cafes, etc.
 
-![Screenshot pubs](./closest_pubs.jpg)
+![Screenshot pubs](./closest_pubs_osm.jpg)
 (App shown running on a laptop)
 
 This is a simple Python Flask and Javascript app which illustrates some of the
