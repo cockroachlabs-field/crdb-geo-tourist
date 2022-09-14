@@ -1,9 +1,13 @@
 #!/usr/bin/env perl
 
+BEGIN {
+  push @INC, "/Library/Perl/5.18";
+}
+
 use strict;
 use Geo::Hash;
  
-my $num_to_find = 100_000_000;
+my $num_to_find = 1_000_000_000;
 
 my $col_sep = "<"; # Illegal in the XML, so safe to use as delimiter
 my @col_names = qw( id timestamp uid lat lon name key_value );
