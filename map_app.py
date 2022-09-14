@@ -120,10 +120,8 @@ if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
   useGeohash = (os.getenv("USE_GEOHASH", "false").lower() == "true")
   print("useGeohash = %s" % ("True" if useGeohash else "False"))
-  is_debug = True
-  if "KUBERNETES_SERVICE_HOST" in os.environ:
-    is_debug = False
-  app.run(host='0.0.0.0', port=port, threaded=True, debug=is_debug)
+  from waitress import serve
+  serve(app, host="0.0.0.0", port=port)
   # Shut down the DB connection when app quits
   engine.dispose()
 

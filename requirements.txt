@@ -1,6 +1,7 @@
 psycopg2-binary
 Flask==2.1.0
 gunicorn
+waitress
 python-geohash
 Geohash
 flask-cors
