@@ -36,7 +36,7 @@ echo "Validate that the Operator is running"
 run_cmd kubectl get pods
 
 echo "Initialize the cluster"
-run_cmd kubectl apply -f ./cockroachdb.yaml
+run_cmd kubectl apply -f $dir/cockroachdb.yaml
 
 echo "Check that the pods were created"
 run_cmd kubectl get pods
@@ -65,11 +65,11 @@ kubectl get pods
 echo "Once all three DB pods show 'Running', use the SQL CLI to add a user for use by the Web app"
 echo "Press ENTER to run this SQL"
 read
-cat ./create_user.sql | kubectl exec -i cockroachdb-client-secure -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public
+cat $dir/create_user.sql | kubectl exec -i cockroachdb-client-secure -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public
 
 # Create table, index, and load data
 echo "Create DB tables and load data (takes about 3 minutes)"
-run_cmd kubectl apply -f ./data-loader.yaml
+run_cmd kubectl apply -f $dir/data-loader.yaml
 echo "Run 'kubectl get pods' periodically until the line for 'crdb-geo-loader' shows STATUS of 'Completed'"
 run_cmd kubectl get pods
 
@@ -80,7 +80,7 @@ echo "** Use 'tourist' as both login and password **"
 # Start the Web app
 echo "Press ENTER to start the CockroachDB Geo Tourist app"
 read
-envsubst < ./crdb-geo-tourist.yaml | kubectl apply -f -
+envsubst < $dir/crdb-geo-tourist.yaml | kubectl apply -f -
 
 # Get the IP address of the load balancer
 run_cmd kubectl describe service crdb-geo-tourist-lb
@@ -100,7 +100,7 @@ run_cmd kubectl get pods
 
 # Perform an online rolling upgrade
 echo "Perform a zero downtime upgrade of CockroachDB (note the version in the DB Console UI)"
-run_cmd kubectl apply -f ./rolling_upgrade.yaml
+run_cmd kubectl apply -f $dir/rolling_upgrade.yaml
 echo "Check the DB Console to verify the version has changed"
 echo
 
@@ -112,16 +112,16 @@ echo "Press ENTER to confirm you want to TEAR IT DOWN."
 read
 
 echo "Deleting the Geo Tourist app"
-kubectl delete -f ./crdb-geo-tourist.yaml
+kubectl delete -f $dir/crdb-geo-tourist.yaml
 
 echo "Deleting the data loader app"
-kubectl delete -f ./data-loader.yaml
+kubectl delete -f $dir/data-loader.yaml
 
 echo "Deleting the SQL client"
 kubectl delete -f $SQL_CLIENT_YAML
 
 echo "Deleting the CockroachDB cluster"
-kubectl delete -f ./cockroachdb.yaml
+kubectl delete -f $dir/cockroachdb.yaml
 
 echo "Deleting the persistent volumes and persistent volume claims"
 kubectl delete pv,pvc --all
