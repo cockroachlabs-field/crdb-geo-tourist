@@ -4,7 +4,7 @@ import Geohash
 import psycopg2
 import psycopg2.errorcodes
 import sqlalchemy
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, event
 import logging
 import os, sys
 from flask import Flask, request, Response, g, render_template
@@ -25,6 +25,12 @@ db_url = os.getenv("DB_URL")
 if db_url is None:
   print("Environment DB_URL must be set. Quitting.")
   sys.exit(1)
+
+@event.listens_for(engine, "connect")
+def connect(dbapi_connection, connection_record):
+    cursor_obj = dbapi_connection.cursor()
+    cursor_obj.execute("SET default_transaction_use_follower_reads = on;")
+    cursor_obj.close()
 
 db_url = re.sub(r"^postgres", "cockroachdb", db_url)
 engine = create_engine(db_url, pool_size=20, pool_pre_ping=True,
