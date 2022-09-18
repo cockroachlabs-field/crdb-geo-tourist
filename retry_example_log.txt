@@ -1,0 +1,17 @@
+[09/18/2022 09:44:58 AM] Tourist: {"amenity": "bar", "lat": 50.4474203, "lon": 30.5265874, "geohash": "u8vwyxsv909r"}
+[09/18/2022 09:44:59 AM] Error: (psycopg2.OperationalError) server is shutting down
+SSL connection has been closed unexpectedly
+
+[SQL: 
+  SELECT lat, lon
+  FROM tourist_locations
+  WHERE enabled = TRUE
+  ORDER BY RANDOM()
+  LIMIT 1;
+  ]
+(Background on this error at: https://sqlalche.me/e/14/e3q8)
+[09/18/2022 09:44:59 AM] EXECUTE CONNECTION FAILURE BRANCH
+[09/18/2022 09:44:59 AM] Sleeping 0.3336552587834021 s
+[09/18/2022 09:45:00 AM] Retry number 1
+[09/18/2022 09:45:00 AM] Tourist: {"amenity": "pub", "lat": 48.857744, "lon": 2.357768, "geohash": "u09tvwkbgzx5"}
+

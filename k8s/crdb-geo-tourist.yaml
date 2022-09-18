@@ -20,7 +20,7 @@ spec:
   selector:
     matchLabels:
       app: crdb-geo-tourist
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: crdb-geo-tourist
-        image: mgoddard/crdb-geo-tourist:1.10
+        image: mgoddard/crdb-geo-tourist:1.15
         imagePullPolicy: Always
         env:
           - name: DB_URL

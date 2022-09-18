@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: crdb-geo-loader
-    image: mgoddard/crdb-geo-tourist:1.10
+    image: mgoddard/crdb-geo-tourist:1.15
     imagePullPolicy: Always
     env:
       - name: DB_URL
