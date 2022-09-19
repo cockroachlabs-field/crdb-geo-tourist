@@ -6,7 +6,7 @@ from psycopg2.errors import SerializationFailure
 import sqlalchemy
 from sqlalchemy import create_engine, text, event
 import logging
-from flask import Flask, request, Response, g, render_template
+from flask import Flask, request, Response, render_template
 import re, os, sys, time, random, json
 
 useGeohash = False
