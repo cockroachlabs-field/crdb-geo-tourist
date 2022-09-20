@@ -32,9 +32,9 @@ engine = create_engine(db_url, pool_size=20, pool_pre_ping=True,
 
 @event.listens_for(engine, "connect")
 def connect(dbapi_connection, connection_record):
-    cursor_obj = dbapi_connection.cursor()
-    cursor_obj.execute("SET default_transaction_use_follower_reads = on;")
-    cursor_obj.close()
+  cursor_obj = dbapi_connection.cursor()
+  cursor_obj.execute("SET default_transaction_use_follower_reads = on;")
+  cursor_obj.close()
 
 # Returns list of tuples: [(x11, x12), (x21, x22), ...]
 def run_stmt(stmt, max_retries=3):
