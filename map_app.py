@@ -131,7 +131,7 @@ def features():
   if useGeohash:
     stmt = text(sql).bindparams(lon_val=lon, lat_val=lat, geohash=geohash, amenity=amenity)
   else:
-    stmt = text(sql).bindparams(lon_val=lon, lat_val=lat, geohash=geohash, amenity="amenity=" + amenity)
+    stmt = text(sql).bindparams(lon_val=lon, lat_val=lat, amenity="amenity=" + amenity)
   for row in run_stmt(stmt):
     (name, dist_m, lat, lon, dt, kv, rating) = row
     d = {}
