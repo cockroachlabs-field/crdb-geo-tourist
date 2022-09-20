@@ -12,7 +12,7 @@ dir=$( dirname $0 )
 . $dir/include.sh
 
 # Create the GKE K8s cluster
-export USE_GKE_GCLOUD_AUTH_PLUGIN=False
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 echo "See https://www.cockroachlabs.com/docs/v21.1/orchestrate-cockroachdb-with-kubernetes.html#hosted-gke"
 run_cmd gcloud container clusters create $NAME --region=$REGION --machine-type=$MACHINETYPE --num-nodes=$N_NODES
 if [ "$y_n" = "y" ] || [ "$y_n" = "Y" ]
