@@ -34,7 +34,7 @@ spec:
           - name: DB_URL
             value: "postgres://tourist:tourist@cockroachdb-public:26257/defaultdb"
           - name: USE_GEOHASH
-            value: "False"
+            value: "True"
         ports:
         - containerPort: 18080
       restartPolicy: Always

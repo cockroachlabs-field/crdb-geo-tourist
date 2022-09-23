@@ -26,7 +26,7 @@ if db_url is None:
 
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
 
-db_url = re.sub(r"^postgres", "cockroachdb", db_url)
+db_url = re.sub(r"^postgres(ql)?", "cockroachdb", db_url)
 engine = create_engine(db_url, pool_size=20, pool_pre_ping=True,
   connect_args = { "application_name": "CRDB Geo Tourist" })
 

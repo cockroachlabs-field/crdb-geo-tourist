@@ -1,0 +1,6 @@
+defaultdb=> select now() - follower_read_timestamp();
+    ?column?     
+-----------------
+ 00:00:04.199743
+(1 row)
+

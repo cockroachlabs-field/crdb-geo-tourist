@@ -57,7 +57,7 @@ max_retries = int(os.getenv("MAX_RETRIES", "3"))
 logging.info("MAX_RETRIES: {}".format(max_retries))
 
 # Using the CockroachDB dialect
-db_url = re.sub(r"^postgres", "cockroachdb", db_url)
+db_url = re.sub(r"^postgres(ql)?", "cockroachdb", db_url)
 logging.info("DB_CONN_STR (rewritten): {}".format(db_url))
 engine = create_engine(db_url, connect_args = { "application_name": "OSM Data Loader" })
 logging.info("Engine: OK")
