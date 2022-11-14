@@ -30,7 +30,7 @@ while (<>)
 {
   last if $num_found >= $num_to_find;
   my $geohash = "";
-  if (/<node +id="(\d+)" +version="\d+" +timestamp="([^"]+)" +uid="(\d+)" +user="[^"]+" +changeset="\d+" +lat="([^"]+)" +lon="([^"]+)">/) {
+  if (/<node +id="(\d+)" +version="\d+" +timestamp="([^"]+)" +uid="(\d+)" +user="[^"]*"(?: +changeset="\d+")? +lat="([^"]+)" +lon="([^"]+)">/) {
     $cols{id} = $1;
     $cols{timestamp} = $2;
     $cols{uid} = $3;
