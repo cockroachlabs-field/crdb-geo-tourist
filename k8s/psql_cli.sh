@@ -10,5 +10,6 @@ find $cert -mmin +20 -exec rm -f {} \; >/dev/null 2>&1
 # Get the CA cert if necessary
 [ -f $cert ] || ./get_ca_cert.sh
 
+export PAGER=cat # Disable paging
 psql "postgresql://tourist:tourist@${lb_ip}:26257/defaultdb?sslmode=require&sslrootcert=$cert"
 
