@@ -1,5 +1,8 @@
 .*.swp
 
+# Common static content copied over from Python Flask app to Spring Boot app
+java/geo-tourist/src/main/resources/static/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
