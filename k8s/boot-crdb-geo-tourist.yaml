@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: crdb-geo-tourist-lb
+spec:
+  selector:
+    app: crdb-geo-tourist
+  ports:
+  - protocol: "TCP"
+    port: 80 
+    targetPort: 18080
+  type: LoadBalancer
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crdb-geo-tourist
+spec:
+  selector:
+    matchLabels:
+      app: crdb-geo-tourist
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: crdb-geo-tourist
+    spec:
+      containers:
+      - name: crdb-geo-tourist
+        image: mgoddard/boot-geo-tourist:latest
+        imagePullPolicy: Always
+        env:
+          - name: DB_URL
+            value: "jdbc:postgresql://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&ssl=true"
+          - name: USE_GEOHASH
+            value: "True"
+          - name: FLASK_PORT
+            value: 18080
+        ports:
+        - containerPort: 18080
+      restartPolicy: Always
+
