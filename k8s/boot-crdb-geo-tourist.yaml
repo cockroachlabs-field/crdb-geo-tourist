@@ -28,15 +28,15 @@ spec:
     spec:
       containers:
       - name: crdb-geo-tourist
-        image: mgoddard/boot-geo-tourist:latest
+        image: mgoddard/boot-geo-tourist:1.0
         imagePullPolicy: Always
         env:
           - name: DB_URL
-            value: "jdbc:postgresql://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&ssl=true"
+            value: "jdbc:postgresql://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&sslmode=require"
           - name: USE_GEOHASH
             value: "True"
           - name: FLASK_PORT
-            value: 18080
+            value: "18080"
         ports:
         - containerPort: 18080
       restartPolicy: Always
