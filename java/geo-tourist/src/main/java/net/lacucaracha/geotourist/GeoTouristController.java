@@ -91,7 +91,6 @@ public class GeoTouristController {
         double lon = amenityQuery.getLon();
         String amenityType = amenityQuery.getAmenity();
         String geohash = amenityQuery.getGeohash();
-        System.out.println("Geohash: " + geohash);
         rv = this.jdbcTemplate.query(
                 sql,
                 (useGeohash ? new Object[]{lon, lat, geohash, amenityType} : new Object[]{lon, lat, lon, lat, amenityType}),

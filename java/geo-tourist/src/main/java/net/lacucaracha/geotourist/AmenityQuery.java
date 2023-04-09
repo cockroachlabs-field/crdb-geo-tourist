@@ -48,6 +48,6 @@ public class AmenityQuery {
 
     // TODO: fill this in
     public String toString() {
-        return "[lat: " + lat + ", lon:" + lon + ", amenity: " + amenity + "]";
+        return "[lat: " + lat + ", lon:" + lon + ", amenity: " + amenity + ", geohash: " + getGeohash() + "]";
     }
 }
