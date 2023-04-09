@@ -55,19 +55,22 @@
     //console.log("lat: " + pos.lat + ", lon: " + pos.lng);
 
     // Add data points
-    $.post("/features",
-      JSON.stringify({ "amenity": amenity, "lat": pos.lat, "lon": pos.lng}),
-      function(data) {
-        data.forEach(function(obj) {
-          m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
-          var msg = "<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters" + "<br/>" + obj.rating;
-          var p = L.popup({autoPan: false}).setContent(msg);
-          m.addTo(mymap).bindPopup(p);
-          allMarkers.push(m);
-        })
-      },
-      "json"
-    );
+    $.ajax ({
+    url: "/features",
+    type: "POST",
+    data: JSON.stringify({ "amenity": amenity, "lat": pos.lat, "lon": pos.lng}),
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    success: function(data) {
+      data.forEach(function(obj) {
+        m = L.marker([obj.lat, obj.lon], {icon: iconMap.get(amenity)});
+        var msg = "<b>" + obj.name + "</b><br/>" + obj.dist_m + " meters" + "<br/>" + obj.rating;
+        var p = L.popup({autoPan: false}).setContent(msg);
+        m.addTo(mymap).bindPopup(p);
+        allMarkers.push(m);
+      })
+      }
+    });
   }
 
   // FIXME: is there a way to pass parameter in?
