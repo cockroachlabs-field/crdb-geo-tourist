@@ -1,5 +1,7 @@
 package net.lacucaracha.geotourist;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,6 +19,8 @@ import java.util.Locale;
 
 @RestController
 public class GeoTouristController {
+
+    Logger logger = LoggerFactory.getLogger(GeoTouristController.class);
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -58,8 +62,7 @@ public class GeoTouristController {
 
     @PostMapping(value = "/features", consumes = "application/json", produces = "application/json")
     public List<Amenity> getFeatures(@RequestBody AmenityQuery amenityQuery) {
-        // FIXME
-        System.out.println(amenityQuery.toString());
+        logger.info(amenityQuery.toString());
         List<Amenity> rv = new ArrayList<>();
         String sql = "WITH q1 AS\n" +
                 "  (\n" +
