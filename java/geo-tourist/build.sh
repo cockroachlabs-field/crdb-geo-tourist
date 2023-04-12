@@ -6,5 +6,5 @@
 cp ../../templates/index.html ./src/main/resources/static/
 rsync -av ../../static ./src/main/resources/static/
 
-./gradlew clean build
+./mvnw clean package
 

@@ -2,5 +2,5 @@
 
 . ./env.sh
 
-java -jar build/libs/geo-tourist-0.0.1-SNAPSHOT.jar
+java -jar ./target/geo-tourist-0.0.1-SNAPSHOT.jar
 
