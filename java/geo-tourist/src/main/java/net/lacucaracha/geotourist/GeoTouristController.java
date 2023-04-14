@@ -15,7 +15,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @RestController
 public class GeoTouristController {
@@ -24,16 +23,6 @@ public class GeoTouristController {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
-
-    // Whether to use the geohash form of the SQL query
-    static boolean useGeohash = true;
-
-    static {
-        String useGeohashStr = System.getenv("USE_GEOHASH");
-        if (useGeohashStr != null && "false".equals(useGeohashStr.toLowerCase(Locale.ROOT))) {
-            useGeohash = false;
-        }
-    }
 
     // https://docs.spring.io/spring-framework/docs/3.0.x/spring-framework-reference/html/jdbc.html
     @GetMapping("/sites")
@@ -65,30 +54,22 @@ public class GeoTouristController {
         logger.info(amenityQuery.toString());
         List<Amenity> rv = new ArrayList<>();
         String sql = "WITH q1 AS\n" +
-                "  (\n" +
-                "    SELECT\n" +
-                "      name,\n" +
-                "      ST_Distance(ST_MakePoint(?, ?)::GEOGRAPHY, ref_point)::NUMERIC(9, 2) dist_m,\n" +
-                "      ST_Y(ref_point::GEOMETRY) lat,\n" +
-                "      ST_X(ref_point::GEOMETRY) lon,\n" +
-                "      date_time,\n" +
-                "      key_value,\n" +
-                "      rating\n" +
-                "    FROM osm\n" +
-                "    WHERE\n";
-        if (useGeohash) {
-            sql += "geohash4 = SUBSTRING(? FOR 4) AND amenity = ?\n";
-        } else {
-            sql += "ST_DWithin(ST_MakePoint(?, ?)::GEOGRAPHY, ref_point, 5.0E+03, TRUE)\n";
-            sql += "AND key_value && ARRAY[?]\n";
-        }
-        sql += ")\n" +
-                "SELECT * FROM q1\n";
-        if (useGeohash) {
-            sql += "WHERE dist_m < 5.0E+03\n";
-        }
-        sql += "ORDER BY dist_m ASC\n" +
-                "  LIMIT 10;";
+                "(\n" +
+                "  SELECT\n" +
+                "    name,\n" +
+                "    ST_Distance(ST_MakePoint(?, ?)::GEOGRAPHY, ref_point)::NUMERIC(9, 2) dist_m,\n" +
+                "    ST_Y(ref_point::GEOMETRY) lat,\n" +
+                "    ST_X(ref_point::GEOMETRY) lon,\n" +
+                "    date_time,\n" +
+                "    key_value,\n" +
+                "    rating\n" +
+                "  FROM osm\n" +
+                "  WHERE geohash4 = SUBSTRING(? FOR 4) AND amenity = ?\n" +
+                ")\n" +
+                "SELECT * FROM q1\n" +
+                "WHERE dist_m < 5.0E+03\n" +
+                "ORDER BY dist_m ASC\n" +
+                "LIMIT 10";
 
         double lat = amenityQuery.getLat();
         double lon = amenityQuery.getLon();
@@ -96,7 +77,7 @@ public class GeoTouristController {
         String geohash = amenityQuery.getGeohash();
         rv = this.jdbcTemplate.query(
                 sql,
-                (useGeohash ? new Object[]{lon, lat, geohash, amenityType} : new Object[]{lon, lat, lon, lat, amenityType}),
+                new Object[]{lon, lat, geohash, amenityType},
                 new RowMapper<Amenity>() {
                     public Amenity mapRow(ResultSet rs, int rowNum) throws SQLException {
                         Amenity amenity = new Amenity();

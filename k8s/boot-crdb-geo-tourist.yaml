@@ -32,9 +32,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: DB_URL
-            value: "jdbc:postgresql://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&sslmode=require"
-          - name: USE_GEOHASH
-            value: "True"
+            value: "jdbc:cockroachdb://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&sslmode=require"
           - name: FLASK_PORT
             value: "18080"
         ports:
