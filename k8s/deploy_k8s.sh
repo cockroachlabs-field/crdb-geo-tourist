@@ -24,14 +24,12 @@ fi
 # Create the CockroachDB cluster
 echo "See https://www.cockroachlabs.com/docs/stable/deploy-cockroachdb-with-kubernetes.html"
 echo "Apply the CustomResourceDefinition (CRD) for the Operator"
-run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.6.0/install/crds.yaml
+run_cmd kubectl apply -f https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.10.0/install/crds.yaml
 
 echo "Apply the Operator manifest"
-OPERATOR_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.6.0/install/operator.yaml"
+OPERATOR_YAML="./operator.yaml"
+curl https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.10.0/install/operator.yaml | sed 's/namespace: cockroach-operator-system/namespace: default/g' > $OPERATOR_YAML
 run_cmd kubectl apply -f $OPERATOR_YAML
-
-echo "Setting default namespace to the operator namespace"
-run_cmd kubectl config set-context --current --namespace=cockroach-operator-system
 
 echo "Validate that the Operator is running"
 run_cmd kubectl get pods
@@ -52,14 +50,15 @@ run_cmd kubectl describe service crdb-lb
 echo "If not, run 'kubectl describe service crdb-lb' in a separate window"
 
 # Deploy a SQL client
-SQL_CLIENT_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/examples/client-secure-operator.yaml"
+#SQL_CLIENT_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/master/examples/client-secure-operator.yaml"
+SQL_CLIENT_YAML="https://raw.githubusercontent.com/cockroachdb/cockroach-operator/v2.10.0/examples/client-secure-operator.yaml"
 echo "Adding a secure SQL client pod ..."
 kubectl create -f $SQL_CLIENT_YAML
 echo "Done"
 
 echo "Verify the 'cockroachdb-client-secure' is in 'Running' state"
 kubectl get pods
-sleep 10
+sleep 5
 kubectl get pods
 
 # Add DB user for app
@@ -81,7 +80,7 @@ echo "** Use 'tourist' as both login and password **"
 # Start the Web app
 echo "Press ENTER to start the CockroachDB Geo Tourist app"
 read
-envsubst < $dir/crdb-geo-tourist.yaml | kubectl apply -f -
+kubectl apply -f $dir/boot-crdb-geo-tourist.yaml
 
 # Get the IP address of the load balancer
 run_cmd kubectl describe service crdb-geo-tourist-lb
@@ -97,6 +96,12 @@ run_cmd kubectl delete pods cockroachdb-0
 echo "Reload the app page to verify it continues to run"
 echo "Also, note the state in the DB Console"
 echo "A new pod should be started to replace the failed pod"
+run_cmd kubectl get pods
+
+# Scale out by adding a 4th node
+echo "Scale out by adding a fourth node"
+run_cmd kubectl apply -f $dir/scale_out.yaml
+sleep 2
 run_cmd kubectl get pods
 
 # Perform an online rolling upgrade
