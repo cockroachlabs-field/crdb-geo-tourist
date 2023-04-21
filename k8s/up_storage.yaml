@@ -1,0 +1,33 @@
+apiVersion: crdb.cockroachlabs.com/v1alpha1
+kind: CrdbCluster
+metadata:
+  # this translates to the name of the statefulset that is created
+  name: cockroachdb
+spec:
+  dataStore:
+    pvc:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "300Gi"
+        volumeMode: Filesystem
+  resources:
+    requests:
+      cpu: 3
+      memory: 12Gi
+    limits:
+      cpu: 3
+      memory: 12Gi
+  tlsEnabled: true
+# You can set either a version of the db or a specific image name
+# cockroachDBVersion: v21.1.11
+  image:
+    name: cockroachdb/cockroach:v22.2.6
+  # nodes refers to the number of crdb pods that are created
+  # via the statefulset
+  nodes: 4
+  additionalLabels:
+    crdb: is-cool
+
