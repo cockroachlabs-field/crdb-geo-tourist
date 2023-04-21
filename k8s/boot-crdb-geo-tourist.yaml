@@ -32,7 +32,7 @@ spec:
         imagePullPolicy: Always
         env:
           - name: DB_URL
-            value: "jdbc:cockroachdb://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&sslmode=require&ApplicationName=Geo%20Tourist%20Boot&retryConnectionErrors=true&retryTransientErrors=true"
+            value: "jdbc:cockroachdb://cockroachdb-public:26257/defaultdb?user=tourist&password=tourist&sslmode=require&ApplicationName=Geo%20Tourist%20Boot&retryConnectionErrors=true&retryTransientErrors=true&options=-c%20default_transaction_use_follower_reads%3Don"
           - name: FLASK_PORT
             value: "18080"
         ports:
