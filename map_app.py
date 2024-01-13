@@ -151,7 +151,7 @@ def index():
 
 if __name__ == '__main__':
   port = int(os.getenv("FLASK_PORT", 18080))
-  useGeohash = (os.getenv("USE_GEOHASH", "false").lower() == "true")
+  useGeohash = (os.getenv("USE_GEOHASH", "true").lower() == "true")
   print("useGeohash = %s" % ("True" if useGeohash else "False"))
   from waitress import serve
   serve(app, host="0.0.0.0", port=port, threads=10)
