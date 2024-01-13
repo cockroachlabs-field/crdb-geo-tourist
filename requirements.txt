@@ -6,5 +6,5 @@ waitress
 python-geohash
 Geohash
 flask-cors
-sqlalchemy
+sqlalchemy<2.0
 sqlalchemy-cockroachdb
