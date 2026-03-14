@@ -1,5 +1,5 @@
 psycopg2-binary
-Werkzeug==2.2.2
+Werkzeug==3.1.6
 Flask==2.1.0
 gunicorn
 waitress
